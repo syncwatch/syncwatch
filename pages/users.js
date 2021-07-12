@@ -1,6 +1,6 @@
 module.exports.setup = (server) => {
     return {
-        permission: 0,
+        permission: 2,
         navbar: true,
         title: 'Users',
         path: '/users',
