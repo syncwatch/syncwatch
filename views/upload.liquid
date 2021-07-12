@@ -1,0 +1,13 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+<div style="margin: 25px 10px 10px 10px; flex-grow: 1; display: flex; flex-flow: column;">
+    <div class="jumbotron" style="padding: 2rem 1rem;">
+        {% include 'upload-filepicker' %}
+    </div>
+    <div class="jumbotron" style="padding: 2rem 1rem;">
+        {% include 'upload-link' %}
+    </div>
+</div>
+{% include 'socketio' %}
+{% endblock %}

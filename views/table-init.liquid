@@ -1,0 +1,223 @@
+<style>
+    .display-none {
+        display: none !important;
+    }
+
+    table {
+        table-layout: fixed;
+        word-wrap: break-word;
+    }
+
+    th {
+        width: auto !important;
+    }
+
+    td {
+        height: 100%;
+    }
+
+    .card {
+        width: 100%;
+        height: 100%;
+    }
+
+    .card-header {
+        background-color: inherit;
+    }
+
+    .card-body .card-title {
+        font-size: 17px;
+        font-weight: bold;
+    }
+
+    a.stretched-link {
+        text-decoration: none !important;
+    }
+
+    a.color-primary {
+        color: var(--success) !important;
+    }
+
+    a.color-primary:hover {
+        color: var(--success) !important;
+    }
+
+    .table {
+        width: 100%;
+        margin: 0;
+        padding: 0;
+        border-collapse: collapse;
+        border-spacing: 0;
+        transition: all 0.4s ease-in-out;
+        transition: all 0.4s cubic-bezier(.01, .98, .99, .06);
+    }
+
+    .table tr {
+        border: 0;
+    }
+
+    tr {
+        transition: all 0.5s ease-in-out;
+        margin-top: 15px;
+        height: auto;
+        height: auto;
+        float: left;
+    }
+
+    .table th,
+    .table td {
+        width: 100%;
+    }
+
+    .table {
+        border: 0 !important;
+    }
+
+    .table .thead {
+        display: none;
+    }
+
+    td {
+        padding: 0 !important;
+        margin-bottom: 0;
+        display: block;
+        border-top: none !important;
+        overflow-x: hidden !important;
+        text-overflow: ellipsis !important;
+        box-sizing: border-box !important;
+    }
+
+    .table td {
+        display: block;
+    }
+
+    @media screen and (min-width: 1970px) {
+        tr {
+            width: calc(20% - 10px) !important;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        tbody tr:nth-child(2n - 1) .card {
+            background-color: var(--secondary);
+        }
+    }
+
+    @media screen and (min-width: 1600px) and (max-width: 1970px) {
+        tr {
+            width: calc(25% - 10px) !important;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        tbody tr:nth-child(8n - 7) .card,
+        tbody tr:nth-child(8n - 5) .card,
+        tbody tr:nth-child(8n - 2) .card,
+        tbody tr:nth-child(8n) .card {
+            background-color: var(--secondary);
+        }
+    }
+
+    @media screen and (min-width: 1200px) and (max-width: 1600px) {
+        tr {
+            width: calc(33.3% - 10px) !important;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        tbody tr:nth-child(2n - 1) .card {
+            background-color: var(--secondary);
+        }
+    }
+
+    @media screen and (min-width: 700px) and (max-width: 1200px) {
+        tr {
+            width: calc(50% - 10px) !important;
+            margin-left: 5px;
+            margin-right: 5px;
+        }
+
+        tbody tr:nth-child(4n) .card,
+        tbody tr:nth-child(4n - 3) .card {
+            background-color: var(--secondary);
+        }
+    }
+
+    @media screen and (max-width: 700px) {
+        tr {
+            width: 100% !important;
+        }
+
+        tbody tr:nth-child(2n+1) .card {
+            background-color: var(--secondary);
+        }
+    }
+
+    tbody tr:hover .card {
+        background-color: var(--primary);
+        transition: all 0.8s ease !important;
+    }
+
+
+    .table td:last-child {
+        border-bottom: 0;
+    }
+
+    .dataTables_wrapper {
+        width: 100%;
+        height: 100%;
+    }
+
+    .dataTables_filter {
+        float: left;
+    }
+
+    .dataTables_processing {
+        height: auto !important;
+        z-index: 999 !important;
+    }
+</style>
+<script>
+    var linkElement = document.createElement("link");
+    linkElement.rel = "stylesheet";
+    linkElement.href = "https://cdn.datatables.net/1.10.24/css/dataTables.bootstrap4.min.css";
+
+    document.head.appendChild(linkElement);
+</script>
+<script src="https://cdn.datatables.net/1.10.24/js/jquery.dataTables.min.js" crossorigin="anonymous"></script>
+<script src="https://cdn.datatables.net/1.10.24/js/dataTables.bootstrap4.min.js" crossorigin="anonymous"></script>
+
+<script>
+    var table = null;
+    $(document).ready(() => {
+        table = $('#fileTable').DataTable({
+            "paging": false,
+            "info": false,
+            "dom": '<r><"#search_field">t',
+            "processing": true,
+            "language": {
+                "processing": '<i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span>'
+            },
+            "serverSide": true,
+            "ajax": {
+                "url": "/api",
+                "data": {
+                    "req_url": '{{current_path}}'
+                }
+            },
+            "columns": [
+                { "data": "card" }
+            ]
+        });
+
+        document.getElementById('search_field').innerHTML = `
+        <form class="form-inline">
+            <input id="search_input" class="form-control" type="text" placeholder="Search">
+        </form>
+        `;
+
+        $('#search_input').on('keyup', function () {
+            table.search($('#search_input').val()).draw();
+        });
+    });
+</script>

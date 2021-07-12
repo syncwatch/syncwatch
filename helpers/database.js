@@ -1,0 +1,141 @@
+module.exports.createDatabase = async (settings) => {
+    var sqlite3 = require('sqlite3');
+    var db = new sqlite3.Database('./server.db');
+
+    db.serialize(() => {
+        db.run(`
+            CREATE TABLE IF NOT EXISTS users (
+            username TEXT NOT NULL PRIMARY KEY,
+            password TEXT NOT NULL,
+            permission INTEGER NOT NULL
+            );
+        `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS log (
+            time INTEGER NOT NULL,
+            msg TEXT NOT NULL
+            );
+        `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS files (
+            relpath TEXT NOT NULL PRIMARY KEY,
+            parent TEXT NOT NULL,
+            series TEXT,
+            season TEXT,
+            episode TEXT,
+            filename TEXT NOT NULL,
+            directory INTEGER NOT NULL,
+            extension TEXT NOT NULL
+            );
+        `);
+    });
+
+    var functions = {};
+
+    functions.log = (time, msg) => {
+        db.run(`INSERT INTO log(time, msg) VALUES(?, ?);`, [time, msg]);
+    }
+
+    functions.getLog = (cb) => {
+        db.all(`SELECT * FROM log ORDER BY time DESC`, [], (err, rows) => {
+            cb(rows);
+        });
+    }
+
+    functions.getUser = (username, password, cb) => {
+        db.get(`SELECT username, permission FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+            cb(row);
+        });
+    }
+
+    functions.getUsers = (permission, cb) => {
+        db.all(`SELECT username, password, permission FROM users WHERE permission <= ?`, [permission], (err, rows) => {
+            cb(rows);
+        });
+    }
+
+    functions.createUser = (username, password, permission, cb) => {
+        db.run(`INSERT INTO users(username, password, permission) VALUES(?, ?, ?);`, [username, password, permission], [], cb);
+    }
+
+    functions.deleteUser = (username, permission, cb) => {
+        db.run(`DELETE FROM users WHERE username = ? AND permission <= ?`, [username, permission], cb);
+    }
+
+    functions.getFiles = (parent, cb) => {
+        db.all(`SELECT * FROM files WHERE parent = ? ORDER BY relpath ASC`, [parent], (err, rows) => {
+            cb(rows);
+        });
+    }
+
+    functions.getFile = (relpath, cb) => {
+        db.get(`SELECT * FROM files WHERE relpath = ?`, [relpath], (err, row) => {
+            cb(row);
+        });
+    }
+
+    functions.getDirectories = (cb) => {
+        db.all(`SELECT * FROM files WHERE directory = 1`, [], (err, rows) => {
+            cb(rows);
+        });
+    }
+
+    functions.getMovieFiles = (parent, cb) => {
+        var extor = settings.MOVIE_EXTENSIONS.map(() => 'extension = ?').join(' OR ');
+        db.all(`SELECT * FROM files WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
+            [parent, ...settings.MOVIE_EXTENSIONS], (err, rows) => {
+                cb(rows);
+            });
+    }
+
+    functions.getMovieFile = (relpath, cb) => {
+        var extor = settings.MOVIE_EXTENSIONS.map(() => 'extension = ?').join(' OR ');
+        db.get(`SELECT * FROM files WHERE relpath = ? AND (` + extor + `)`,
+            [relpath, ...settings.MOVIE_EXTENSIONS], (err, row) => {
+                cb(row);
+            });
+    }
+
+    functions.updateFiles = (files) => {
+        var relpaths = files.map((file) => file.relpath);
+
+        db.serialize(() => {
+
+            var foundfiles = [];
+
+
+            db.all(`SELECT relpath FROM files`, [], (err, rows) => {
+                rows.map((row) => row.relpath).forEach((relpath) => {
+                    if (!relpaths.includes(relpath)) {
+                        db.run(`DELETE FROM files WHERE relpath = ?`, [relpath]);
+                    } else {
+                        foundfiles.push(relpath);
+                    }
+                });
+
+                var sql = `INSERT OR REPLACE INTO files(relpath, parent, series, season, episode, filename, directory, extension) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+
+                var stmt = db.prepare(sql);
+                for (var i = 0; i < files.length; i++) {
+                    var f = files[i];
+                    if (!foundfiles.includes(f.relpath)) {
+                        stmt.run([
+                            f.relpath,
+                            f.parent,
+                            f.series,
+                            f.season,
+                            f.episode,
+                            f.filename,
+                            f.directory,
+                            f.extension
+                        ]);
+                    }
+                }
+                stmt.finalize();
+
+            });
+        });
+    }
+
+    return functions;
+}

@@ -1,0 +1,117 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+
+{% if history %}
+<div class="ml-2 mt-2">
+    <a href="/file" class="btn btn-primary mr-2 mb-2" style="float: left;"><i class="fas fa-home"></i></a>
+    {% for el in history %}
+    <a href="/file/{{el.path}}" class="btn btn-primary mr-2 mb-2" style="float: left;">/&nbsp;{{el.name}}</a>
+    {% endfor %}
+</div>
+{% endif %}
+<div id="filesTableContainer" style="margin: 10px; height: 100%;">
+    <table class="table w-100" id="fileTable">
+        <thead class="thead">
+            <tr class="tr">
+                <th class="th table-card"></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+{% include 'table-init' %}
+
+<div class="modal fade" id="actionModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content" id="actionModalContent">
+
+        </div>
+    </div>
+</div>
+
+<script>
+    function apiPostAjax(data) {
+        var xhttp = new XMLHttpRequest();
+        document.getElementById("actionModalContent").innerHTML = `<div class="modal-body"><i class="fa fa-spinner fa-spin fa-3x fa-fw"></i><span class="sr-only">Loading...</span></div>`;
+        $("#actionModal").modal("show");
+        xhttp.onreadystatechange = function () {
+            if (this.readyState == 4) {
+                if (this.status == 200) {
+                    document.getElementById("actionModalContent").innerHTML = JSON.parse(this.responseText).modal;
+                    $("#actionModal").modal("show");
+                } else {
+                    document.getElementById("actionModalContent").innerHTML = `
+                        <div class="modal-header">
+                            <h5 class="modal-title">Error</h5>
+                            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                                <span>&times;</span>
+                            </button>
+                        </div>
+                        <div class="modal-body">
+                            Sorry, something went wrong!
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                        </div>
+                    `;
+                    $("#actionModal").modal("show");
+                }
+
+            }
+        };
+        xhttp.open("POST", "/api", true);
+        xhttp.setRequestHeader("Content-type", "application/x-www-form-urlencoded");
+        xhttp.send(data);
+    }
+
+    $(document).ready(() => {
+        table.on('draw.dt', () => {
+            $("#filesTableContainer .card a").contextMenu({
+                id: 'filesContext',
+                menuSelector: "#contextMenu",
+                menuSelected: ($invokedOn, $selectedMenu) => {
+                    apiPostAjax(
+                        "id=" + $invokedOn.attr("data-id") + "&action=" + $selectedMenu.attr("data-action")
+                    );
+                },
+                onMenuShow: ($invokedOn) => {
+                    $('#contextMenu').html(
+                        `<a class="dropdown-item" href="javascript:void(0);" data-action="check-newfolder">New Folder</a>
+                        <div class="divider py-1 my-1 bg-dark"></div>
+                        <a class="dropdown-item" href="javascript:void(0);" data-action="check-rename">Rename</a>
+                        <a class="dropdown-item" href="javascript:void(0);" data-action="check-move">Move</a>
+                        <a class="dropdown-item" href="javascript:void(0);" data-action="check-delete">Delete</a>`
+                    );
+                },
+                onMenuHide: ($invokedOn) => {
+                }
+            });
+
+            var sourceElement = undefined;
+
+            $("#filesTableContainer .card a").on("dragstart", (event) => {
+                sourceElement = event.target;
+            });
+
+            $("#filesTableContainer .card a").on("dragover", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+            });
+
+            $("#filesTableContainer .card a").on("drop", (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                if (sourceElement !== undefined) {
+                    if (sourceElement !== event.target) {
+                        apiPostAjax('id1='+$(sourceElement).attr("data-id")+'&id2='+$(event.target).attr("data-id")+'&action=check-move2');
+                    }
+                    sourceElement = undefined;
+                }
+            });
+
+        });
+    });
+</script>
+
+{% endblock %}

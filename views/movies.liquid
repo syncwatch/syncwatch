@@ -1,0 +1,24 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+
+{% if history %}
+<div class="ml-2 mt-2">
+    <a href="/movies" class="btn btn-primary mr-2 mb-2" style="float: left;"><i class="fas fa-home"></i></a>
+    {% for el in history %}
+    <a href="/movies/{{el.path}}" class="btn btn-primary mr-2 mb-2" style="float: left;">/&nbsp;{{el.name}}</a>
+    {% endfor %}
+</div>
+{% endif %}
+<div class="d-flex align-content-around flex-wrap" style="margin: 10px;">
+    <table class="table" id="fileTable" style="width: 100%;">
+        <thead class="thead">
+            <tr class="tr">
+                <th class="th table-card"></th>
+            </tr>
+        </thead>
+    </table>
+</div>
+
+{% include 'table-init' %}
+{% endblock %}

@@ -1,0 +1,35 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+<div style="margin: 10px;">
+    <p class="h4 mb-2 mt-2">Rooms:</p>
+    <div class="card-deck w-100" style="margin: 0;" id="room-cards">
+    </div>
+</div>
+{% include 'socketio' %}
+<script>
+    $(() => {
+        var socket = io("/home");
+        socket.on("update", rooms => {
+            document.getElementById("room-cards").innerHTML = rooms.map(room => {
+                return `
+                <div class="card m-2" style="min-width: 200px;">
+                    <h5 class="card-header">`+room.status+`</h5>
+                    <div class="card-body">
+                        <h5 class="card-title">Users:</h5>
+                        <ul class="list-group">`+
+                            room.users.map((user) => {
+                                return '<li class="list-group-item">'+user+'</li>';
+                            }).join('')
+                        +`</ul>
+                        <a href="/room/`+room.id+`" class="btn btn-primary stretched-link mt-2">Join</a>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        });
+        socket.emit("update");
+        setInterval(() => socket.emit("update"), 3000);
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,672 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+<script>
+    var linkElement = document.createElement("link");
+    linkElement.rel = "stylesheet";
+    linkElement.href = "https://cdn.plyr.io/3.6.7/plyr.css";
+
+    document.head.appendChild(linkElement);
+</script>
+<script src="https://cdn.plyr.io/3.6.7/plyr.js"></script>
+
+<div class="modal" id="roomJoinedModal" tabindex="-1" role="dialog">
+    <div class="modal-dialog modal-dialog-centered" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">ERROR: no title given</h5>
+            </div>
+            <div class="modal-body">
+                ERROR: no text given
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">OK</button>
+            </div>
+        </div>
+    </div>
+</div>
+<div style="margin: 10px;">
+    <div>
+        <div class="d-flex">
+            <div class="mr-2 mb-2" style="width: 50px;">
+                <a href="/movies/{{parent}}" class="btn btn-primary w-100"><i class="fas fa-arrow-left"></i></a>
+            </div>
+            <div class="mx-auto d-flex">
+                <p class="mr-4 mb-2 p-2" id="fileName"></p>
+                <div class="mb-2">
+                    <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                        <label class="btn btn-primary">
+                            <input type="radio" name="options" id="toggleOnlineBtn" autocomplete="off"
+                                onclick="toggleWatchingOnline(true)">Online
+                        </label>
+                        <label class="btn btn-primary">
+                            <input type="radio" name="options" id="toggleOfflineBtn" autocomplete="off"
+                                onclick="toggleWatchingOnline(false)">Offline
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="d-flex">
+            <div class="mx-auto mb-2">
+                Room-ID:&nbsp;<span id="roomId">Error Room-ID unknown</span>
+            </div>
+        </div>
+    </div>
+    <div style="margin: 0 auto 10px; max-width: 1000px;">
+        <video id="player" controls preload="metadata" crossorigin="anonymous">
+            <source src="" type="video/mp4">
+            <track label="English" kind="subtitles" srclang="en" src="" default>
+        </video>
+        <div id="backplayer-container">
+            <video id="backplayer" preload="metadata" crossorigin="anonymous">
+                <source src="" type="video/mp4">
+            </video>
+        </div>
+    </div>
+    <div style="margin: 0 auto; max-width: 1000px;">
+        <ul class="list-group" id="userList">
+        </ul>
+    </div>
+</div>
+{% include 'socketio' %}
+<script>
+
+    var socket;
+    function emit(key, data = undefined) {
+        socket.emit(key, data);
+    }
+
+    var watchingOnlineStorageKey = 'watchingOnline';
+    if (localStorage.getItem(watchingOnlineStorageKey) == 'false') {
+        document.getElementById('toggleOfflineBtn').checked = true;
+        document.getElementById('toggleOnlineBtn').checked = false;
+    } else {
+        document.getElementById('toggleOfflineBtn').checked = false;
+        document.getElementById('toggleOnlineBtn').checked = true;
+    }
+
+
+    function toggleWatchingOnline(online) {
+        localStorage.setItem(watchingOnlineStorageKey, online);
+
+        if (online == false) {
+            emit('offline');
+        } else {
+            emit('online');
+        }
+    }
+
+    var initialized = false;
+
+    var oldPlayerVolume = 1;
+    try {
+        oldPlayerVolume = JSON.parse(localStorage.getItem("plyr"))['volume'];
+    } catch {
+    }
+
+    var timeOffset = 0.5;
+
+    var last_pause = 0;
+
+    var player;
+
+    var backplayer;
+
+    var sheet = document.createElement('style');
+
+    document.body.appendChild(sheet);
+
+    $(() => {
+        socket = io("/player");
+
+        emit('ready', "{{room_id}}");
+
+        toggleWatchingOnline(localStorage.getItem(watchingOnlineStorageKey) != 'false');
+
+        $('#roomJoinedModal').on('hide.bs.modal', e => {
+            emit('update');
+        });
+
+        socket.on('room-id', id => {
+            document.getElementById('roomId').innerText = id;
+        });
+
+        socket.on('users', users => {
+            document.getElementById('userList').innerHTML = users.map(user => {
+                return '<li class="list-group-item">' + user + '</li>';
+            }).join('');
+        });
+
+        socket.on('fullscreen-leave', () => {
+            player.fullscreen.exit();
+        });
+
+        socket.on('roomJoined', (data) => {
+            $('#roomJoinedModal').modal('hide');
+            $("#roomJoinedModal .modal-title").text(data[0]);
+            $("#roomJoinedModal .modal-body").text(data[1]);
+            $('#roomJoinedModal').modal('show');
+        });
+
+        socket.on('go', timeStamp => {
+            if (timeStamp > player.currentTime + timeOffset || timeStamp < player.currentTime - timeOffset) {
+                player.currentTime = timeStamp;
+            }
+            player.play();
+        });
+        socket.on('goto', timeStamp => {
+            if (timeStamp > player.currentTime + timeOffset || timeStamp < player.currentTime - timeOffset) {
+                player.currentTime = timeStamp;
+            }
+        });
+        socket.on('pause', () => {
+            player.pause();
+        });
+        socket.on('switch', (source) => {
+            if (source.name) {
+                document.getElementById('fileName').innerText = source.name;
+            }
+            if (source.player) {
+                player.source = source.player;
+            }
+            var alternative_audios = [];
+            if (source.alternatives) {
+                alternative_audios = source.alternatives;
+            }
+            settings_options.audio.values = [settings_options.audio.values[0]].concat(alternative_audios);
+            document.getElementById('expanded_settings').innerHTML = generateSettings();
+            setAudioTrack();
+        });
+    });
+
+    function playerSeeked(event) {
+        emit('goto', player.currentTime);
+    }
+
+    function playerPlayed(event) {
+        emit('go', player.currentTime);
+    }
+
+    function playerPaused(event) {
+        emit('pause');
+    }
+
+    var settings_options = {
+        size: {
+            type: 'select',
+            store: true,
+            selected: 1,
+            callback: setCaptionStyle,
+            title: 'Subtitle Size',
+            values: [{
+                title: 'smaller',
+                value: 0.8
+            },
+            {
+                title: 'normal',
+                value: 1
+            },
+            {
+                title: 'bigger',
+                value: 1.2
+            }
+            ]
+        },
+        color: {
+            type: 'select',
+            store: true,
+            selected: 0,
+            callback: setCaptionStyle,
+            title: 'Subtitle Color',
+            values: [{
+                title: 'white',
+                value: 'white'
+            },
+            {
+                title: 'black',
+                value: 'black'
+            }
+            ]
+        },
+        background: {
+            type: 'select',
+            store: true,
+            selected: 0,
+            callback: setCaptionStyle,
+            title: 'Subtitle Background Color',
+            values: [{
+                title: 'black',
+                value: 'rgba(0, 0, 0, 0.4)'
+            },
+            {
+                title: 'white',
+                value: 'rgba(255, 255, 255, 0.4)'
+            },
+            {
+                title: 'none',
+                value: 'none'
+            }
+            ]
+        },
+        family: {
+            type: 'select',
+            store: true,
+            selected: 0,
+            callback: setCaptionStyle,
+            title: 'Subtitle Font',
+            values: [{
+                title: 'Arial',
+                value: 'Arial, Helvetica, sans-serif'
+            },
+            {
+                title: 'Arial Black',
+                value: '"Arial Black", Gadget, sans-serif'
+            },
+            {
+                title: 'Times New Roman',
+                value: '"Times New Roman", Times, serif'
+            },
+            {
+                title: 'Comic Sans',
+                value: '"Comic Sans MS", "Comic Sans", serif'
+            }
+            ]
+        },
+        offset: {
+            type: 'number',
+            store: false,
+            step: 0.5,
+            value: 0,
+            suffix: 's',
+            callback: setOffset,
+            title: 'Subtitle Offset',
+        },
+        audio: {
+            type: 'select',
+            store: true,
+            selected: 0,
+            callback: setAudioTrack,
+            title: 'Audio Track',
+            values: [{
+                title: 'original',
+                original: true
+            }
+            ]
+        },
+        altoffset: {
+            type: 'number',
+            store: false,
+            step: 200,
+            value: 0,
+            suffix: 'ms',
+            callback: () => { },
+            title: 'Alt Offset'
+        },
+        showsecond: {
+            type: 'select',
+            store: false,
+            selected: 0,
+            callback: setShowSecond,
+            title: 'Show Second',
+            values: [{
+                title: 'hide',
+                value: false
+            },
+            {
+                title: 'show',
+                value: true
+            },
+            ]
+        },
+    };
+
+    function setCaptionStyle(
+        size = settings_options.size.values[settings_options.size.selected].value,
+        color = settings_options.color.values[settings_options.color.selected].value,
+        background = settings_options.background.values[settings_options.background.selected].value,
+        family = settings_options.family.values[settings_options.family.selected].value) {
+        var newCaptionSize = (40 * size) + ((document.documentElement.clientHeight - 1000) / 40);
+        sheet.innerHTML = ".plyr__caption {color: " + color + "; background: " + background + "; font-size: " + newCaptionSize + "px; font-family: " + family + "; }";
+    }
+
+    var previousOffset = 0;
+
+    function setOffset(offset = settings_options.offset.value) {
+        const video = document.getElementById('player');
+        if (video) {
+            Array.from(video.textTracks).forEach((track) => {
+                Array.from(track.cues).forEach((cue) => {
+                    cue.startTime += offset - previousOffset;
+                    cue.endTime += offset - previousOffset;
+                });
+            });
+            previousOffset = offset;
+            return true;
+        }
+        return false;
+    }
+
+    var audioplayer = null;
+    var mutedplayer = null;
+
+    function setAudioTrack(track = settings_options.audio.values[settings_options.audio.selected]) {
+        if (track.original) {
+            backplayer.source = { type: 'video', title: '', sources: [{ src: '' }] };
+            backplayer.muted = true;
+            player.muted = false;
+            audioplayer = player;
+            mutedplayer = backplayer;
+        } else {
+            backplayer.source = track.src;
+            backplayer.muted = false;
+            player.muted = true;
+            audioplayer = backplayer;
+            mutedplayer = player;
+            setTimeout(() => { backplayer.pause(); setTimeout(() => { if (player.playing) backplayer.play(); }, 0); }, 0);
+        }
+    }
+
+    function changeVolume(value) {
+        backplayer.volume = value;
+        player.volume = value;
+        if (value == 0) {
+            $('button[data-myplyr="mute"]').addClass('plyr__control--pressed');
+        } else {
+            $('button[data-myplyr="mute"]').removeClass('plyr__control--pressed');
+        }
+        if (mutedplayer != null) {
+            mutedplayer.muted = true;
+        }
+    }
+
+    function changeMute() {
+        if (audioplayer && audioplayer.volume != 0) {
+            player.storage.set({
+                old_volume: audioplayer.volume
+            });
+            $('input[data-myplyr="volume"]').val(0).css("--value", '0%');
+            changeVolume(0);
+        } else {
+            var old_volume = player.storage.get('old_volume');
+            if (old_volume === null) {
+                old_volume = 0.5;
+            }
+            $('input[data-myplyr="volume"]').val(old_volume).css("--value", (old_volume * 100) + '%');
+            changeVolume(old_volume);
+        }
+    }
+
+    function setShowSecond(show = settings_options.showsecond.values[settings_options.showsecond.selected].value) {
+        if (show) {
+            document.getElementById("backplayer-container").style.display = "initial";
+        } else {
+            document.getElementById("backplayer-container").style.display = "none";
+        }
+    }
+
+    setShowSecond();
+
+    function changeSettingsSelected(key, selected) {
+        if (settings_options[key] !== undefined) {
+            settings_options[key].selected = selected;
+            settings_options[key].callback();
+            storeCaptionSettings();
+        }
+    }
+
+    function changeNumberValue(key, value) {
+        if (settings_options[key] !== undefined) {
+            settings_options[key].value = value;
+            settings_options[key].callback();
+            storeCaptionSettings();
+        }
+    }
+
+    function generateSettings() {
+
+        var ret = `<div>
+                        <div id="hideoverview">
+                            <div role="menu">`;
+
+        for (const [key, value] of Object.entries(settings_options)) {
+            var title = '';
+            if (value.type == 'select') {
+                title = value.values[value.selected].title;
+            } else if (value.type == 'number') {
+                title = value.value + value.suffix;
+            }
+            ret += `<button onclick="document.getElementById('hidealldeep').hidden = false; document.getElementById('hideoverview').hidden = true; document.getElementById('hidesettings_` + key + `').hidden = false;" type="button" class="plyr__control">
+                        <span>` + value.title + `<span class="plyr__menu__value" id="settingstitle_` + key + `">` + title + `</span></span>
+                    </button>`;
+
+        }
+
+
+        ret += `    </div>
+                    </div>
+                    <div id="hidealldeep" hidden="">`;
+
+        for (const [key, value] of Object.entries(settings_options)) {
+            ret += `<div id="hidesettings_` + key + `" hidden="">
+                        <button onclick="document.getElementById('hidealldeep').hidden = true; document.getElementById('hideoverview').hidden = false; document.getElementById('hidesettings_` + key + `').hidden = true;" type="button" class="plyr__control plyr__control--back">
+                            <span>` + value.title + `</span><span class="plyr__sr-only">Go back to previous menu</span>
+                        </button>
+                        <div role="menu">`;
+            if (value.type == 'select') {
+                var i = 0;
+                var setallunchecked = '';
+                for (const item of value.values) {
+                    setallunchecked += `document.getElementById('settings_` + key + `_item_` + i + `').setAttribute('aria-checked', false);`;
+                    i += 1;
+                }
+
+                i = 0;
+                for (const item of value.values) {
+                    ret += `<button id="settings_` + key + `_item_` + i + `" onclick="` + setallunchecked + `this.setAttribute('aria-checked', true); document.getElementById('settingstitle_` + key + `').textContent='` + item.title + `'; changeSettingsSelected('` + key + `', ` + i + `);" type="button" role="menuitemradio" class="plyr__control" aria-checked="` + ((i == value.selected) ? 'true' : 'false') + `" value="` + item.title + `"><span>` + item.title + `</span></button>`;
+                    i += 1;
+                }
+            } else if (value.type == 'number') {
+                ret += '<div class="plyr__controls__item"><input class="plyr__control" type="number" value="' + value.value + '" step="' + value.step + '" onchange="document.getElementById(\'settingstitle_' + key + '\').textContent=this.value + \'' + value.suffix + '\';changeNumberValue(\'' + key + '\', this.value);">&nbsp;' + value.suffix + '</div>';
+            }
+
+
+            ret += `</div>
+                        </div>`;
+        }
+
+        ret += `   </div>
+                    </div>`;
+        return ret;
+    }
+
+    var controls = `
+            <div class="plyr__controls">
+                <button class="plyr__controls__item plyr__control" type="button" data-plyr="play">
+                    <svg class="icon--pressed" focusable="false">
+                        <use xlink:href="#plyr-pause"></use>
+                    </svg>
+                    <svg class="icon--not-pressed" focusable="false">
+                        <use xlink:href="#plyr-play"></use>
+                    </svg>
+                    <span class="label--pressed plyr__sr-only">Pause</span>
+                    <span class="label--not-pressed plyr__sr-only">Play</span>
+                </button>
+                <div class="plyr__controls__item plyr__progress__container">
+                    <div class="plyr__progress">
+                        <input data-plyr="seek" type="range" min="0" max="100" step="0.01" value="0" autocomplete="off" role="slider">
+                        <progress class="plyr__progress__buffer" role="progressbar" min="0" max="100">% buffered</progress>
+                        <span role="tooltip" class="plyr__tooltip"></span>
+                    </div>
+                </div>
+                <div class="plyr__controls__item plyr__time--current plyr__time"></div>
+                <div class="plyr__controls__item plyr__volume">
+                    <button type="button" class="plyr__control" data-myplyr="mute" onclick="changeMute()">
+                        <svg class="icon--pressed" focusable="false">
+                            <use xlink:href="#plyr-muted"></use>
+                        </svg>
+                        <svg class="icon--not-pressed" focusable="false">
+                            <use xlink:href="#plyr-volume"></use>
+                        </svg>
+                        <span class="label--pressed plyr__sr-only">Unmute</span><span class="label--not-pressed plyr__sr-only">Mute</span>
+                    </button>
+                    <input type="range" data-myplyr="volume" min="0" max="1" step="0.05" value="`+ oldPlayerVolume + `" style="--value:` + (oldPlayerVolume * 100) + `%;" autocomplete="off" role="slider" oninput="changeVolume(this.value)" onchange="changeVolume(this.value)">
+                </div>
+                <button class="plyr__controls__item plyr__control plyr__control--pressed" type="button" data-plyr="captions">
+                    <svg class="icon--pressed" focusable="false">
+                        <use xlink:href="#plyr-captions-on"></use>
+                    </svg>
+                    <svg class="icon--not-pressed" focusable="false">
+                        <use xlink:href="#plyr-captions-off"></use>
+                    </svg>
+                    <span class="label--pressed plyr__sr-only">Disable captions</span><span class="label--not-pressed plyr__sr-only">Enable captions</span>
+                </button>
+
+                <div class="plyr__controls__item plyr__menu">
+                    <button type="button" class="plyr__control" onclick="document.getElementById('expanded_settings').hidden = !document.getElementById('expanded_settings').hidden;">
+                        <svg role="presentation" focusable="false">
+                            <use xlink:href="#plyr-settings"></use>
+                        </svg>
+                        <span class="plyr__sr-only">Settings</span>
+                    </button>
+                    <div id="expanded_settings" class="plyr__menu__container" hidden="">
+                        ` + generateSettings() + `
+                    </div>
+                </div>
+
+                <button class="plyr__controls__item plyr__control" type="button" data-plyr="pip">
+                    <svg focusable="false">
+                        <use xlink:href="#plyr-pip"></use>
+                    </svg>
+                    <span class="plyr__sr-only">PIP</span>
+                </button>
+                <button class="plyr__controls__item plyr__control" type="button" data-plyr="fullscreen">
+                    <svg class="icon--pressed" focusable="false">
+                        <use xlink:href="#plyr-exit-fullscreen"></use>
+                    </svg>
+                    <svg class="icon--not-pressed" focusable="false">
+                        <use xlink:href="#plyr-enter-fullscreen"></use>
+                    </svg>
+                    <span class="label--pressed plyr__sr-only">Exit fullscreen</span><span class="label--not-pressed plyr__sr-only">Enter fullscreen</span>
+                </button>
+            </div>
+            <button type="button" class="plyr__control plyr__control--overlaid" data-plyr="play">
+                <svg focusable="false">
+                    <use xlink:href="#plyr-play"></use>
+                </svg>
+                <span class="plyr__sr-only">Play</span>
+            </button>
+        `;
+
+
+    player = new Plyr('#player', {
+        controls: controls,
+        captions: {
+            active: true,
+            language: 'en',
+            update: false
+        },
+        listeners: {
+            play: (e) => {
+                if (Date.now() < last_pause + 250) {
+                    return false;
+                }
+                last_pause = Date.now();
+                if (player.playing) {
+                    playerPaused(e);
+                    backplayer.pause();
+                }
+                return true;
+            }
+        }
+    });
+
+    backplayer = new Plyr('#backplayer', {
+        controls: ''
+    });
+
+    var interval_initialized = false;
+
+    player.on('seeked', (e) => {
+        playerSeeked(e);
+    });
+
+    player.on('playing', (e) => {
+        playerPlayed(e);
+        backplayer.play();
+    });
+
+    var offs = [];
+    var adjusting_score = 0; // a score that goes more positive if it is on a slower device
+    var adjusting_score_max = 1;
+    var offset_tolerance = 0.0;
+    var offset_tolereance_increment = 0.03;
+
+    const median = arr => {
+        const mid = Math.floor(arr.length / 2);
+        const nums = [...arr].sort((a, b) => a - b);
+        return arr.length % 2 !== 0 ? nums[mid] : (nums[mid - 1] + nums[mid]) / 2;
+    };
+
+    backplayer.on('timeupdate', () => {
+        var offset = settings_options.altoffset.value / 1000;
+        if (Math.abs(backplayer.currentTime - player.currentTime + offset) > offset_tolerance) {
+            backplayer.currentTime = player.currentTime - offset - median(offs);
+            if (adjusting_score < adjusting_score_max) {
+                adjusting_score++;
+            }
+        } else {
+            if (adjusting_score > -adjusting_score_max) {
+                adjusting_score--;
+            }
+        }
+        if (adjusting_score > 0) {
+            offset_tolerance += offset_tolereance_increment;
+        }
+        if (offs.length > 10) {
+            offs.shift();
+        }
+        offs.push(backplayer.currentTime - player.currentTime + offset);
+    });
+
+    function storeCaptionSettings() {
+        if (initialized) {
+            var prejson = {};
+            for (const [key, value] of Object.entries(settings_options)) {
+                if (value.store) {
+                    prejson[key] = value.selected;
+                }
+            }
+            player.storage.set({
+                caption_settings: prejson
+            });
+        }
+    }
+
+    function onResize() {
+        setCaptionStyle();
+    }
+
+    function retrieveCaptionSettings() {
+        var stored_settings = player.storage.get('caption_settings');
+        if (stored_settings != null) {
+            for (const key of Object.keys(stored_settings)) {
+                if (settings_options[key] !== undefined && settings_options[key].values[stored_settings[key]] !== undefined) {
+                    document.getElementById(`settings_` + key + `_item_` + stored_settings[key]).click();
+                }
+            }
+        }
+    }
+
+    player.on('ready', event => {
+        changeVolume(oldPlayerVolume);
+        onResize();
+    });
+
+    document.body.onresize = onResize;
+
+    retrieveCaptionSettings();
+
+    initialized = true;
+</script>
+{% endblock %}

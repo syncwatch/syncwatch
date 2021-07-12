@@ -1,0 +1,77 @@
+<form class="form-inline" enctype="multipart/form-data" name="upload_file">
+    <div class="input-group mb-2 mr-2">
+        <label for="file_picker" class="mr-2 h5 font-weight-bold">Upload File:</label>
+        <input name="file" type="file" id="file_picker" required>
+    </div>
+    <div class="input-group mb-2 mr-2">
+        <button class="btn btn-primary" style="width: 200px;" type="submit">Upload</button>
+    </div>
+</form>
+<div class="progress position-relative">
+    <div class="progress-bar" role="progressbar" style="width: 0%;" id="progress_bar"></div>
+</div>
+<small class="justify-content-center d-flex w-100" style="margin-top: 8px; overflow-x: hidden;"
+    id="progress_text">&nbsp;</small>
+<script>
+    var file_picker = document.getElementById('file_picker');
+    var progress_bar = document.getElementById('progress_bar');
+    var progress_text = document.getElementById('progress_text');
+
+    function triggerLoading(loading) {
+        if (loading) {
+            window.onbeforeunload = function () {
+                return "";
+            };
+            progress_bar.classList.add("progress-bar-striped");
+            progress_bar.classList.add("progress-bar-animated");
+        } else {
+            window.onbeforeunload = function () {
+                return;
+            };
+            progress_bar.classList.remove("progress-bar-striped");
+            progress_bar.classList.remove("progress-bar-animated");
+        }
+    }
+
+    function progressHandler(event) {
+        var percent = (event.loaded / event.total) * 100;
+        progress_bar.style.width = percent + "%";
+    }
+
+    function completeHandler(event) {
+        progress_text.innerText = event.target.responseText;
+        triggerLoading(false);
+    }
+
+    function errorHandler(event) {
+        progress_text.innerText = "Upload Failed";
+        triggerLoading(false);
+    }
+
+    function abortHandler(event) {
+        progress_text.innerText = "Upload Aborted";
+        triggerLoading(false);
+    }
+
+    var form = document.forms.namedItem("upload_file");
+    form.addEventListener('submit', function (ev) {
+        triggerLoading(true);
+        progress_text.innerText = "Uploading";
+        progress_bar.style.width = "0%";
+
+        var formdata = new FormData(form);
+        formdata.append("filepicker_upload", "");
+        var ajax = new XMLHttpRequest();
+        ajax.upload.addEventListener("progress", progressHandler, false);
+        ajax.addEventListener("load", completeHandler, false);
+        ajax.addEventListener("error", errorHandler, false);
+        ajax.addEventListener("abort", abortHandler, false);
+        ajax.open("POST", "?ajax=");
+
+        ajax.send(formdata);
+
+        file_picker.value = '';
+
+        ev.preventDefault();
+    }, false);
+</script>

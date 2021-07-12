@@ -1,0 +1,65 @@
+<form class="form-inline" name="upload_link">
+    <div class="input-group mb-2 mr-2">
+        <label for="file_link" class="mr-2 h5 font-weight-bold">Upload Link:</label>
+        <input name="file_link" type="text" id="file_link" class="form-control" required>
+    </div>
+    <div class="input-group mb-2 mr-2">
+        <button class="btn btn-primary" style="width: 200px;" name="upload_link" type="submit">Upload</button>
+    </div>
+</form>
+<div class="progress position-relative">
+    <div class="progress-bar" role="progressbar" style="width: 0%;" id="progress_bar2"></div>
+</div>
+<small class="justify-content-center d-flex w-100" style="margin-top: 8px; overflow-x: hidden;"
+    id="progress_text2">&nbsp;</small>
+<script>
+    $(() => {
+        var socket = io("/upload");
+        var progress_text2 = document.getElementById("progress_text2");
+        var progress_bar2 = document.getElementById("progress_bar2");
+        var file_link = document.getElementById("file_link");
+
+        var isLoading = false;
+
+        function triggerLoading(loading) {
+            if (loading && !isLoading) {
+                progress_bar2.classList.add("progress-bar-striped");
+                progress_bar2.classList.add("progress-bar-animated");
+                isLoading = true;
+            } else if (!loading && isLoading) {
+                progress_bar2.classList.remove("progress-bar-striped");
+                progress_bar2.classList.remove("progress-bar-animated");
+                isLoading = false;
+            }
+        }
+
+        socket.on("info", info => {
+            progress_text2.innerText = info;
+        });
+
+        socket.on("progress", percent => {
+            progress_bar2.style.width = percent + "%";
+            if (percent < 100) {
+                triggerLoading(true);
+            } else {
+                triggerLoading(false);
+            }
+        });
+
+        var form = document.forms.namedItem("upload_link");
+        form.addEventListener('submit', function (ev) {
+
+            var formdata = new FormData(form);
+            formdata.append("upload_link", "");
+
+            var formDataObject = {};
+            formdata.forEach((value, key) => formDataObject[key] = value);
+
+            socket.emit("upload", formDataObject);
+
+            file_link.value = "";
+
+            ev.preventDefault();
+        }, false);
+    });
+</script>

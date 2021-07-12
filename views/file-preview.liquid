@@ -1,0 +1,32 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+<script>
+    function goBack() {
+        window.history.back();
+    }
+</script>
+<div style="margin: 10px; flex-grow: 1; display: flex; flex-flow: column; height: 90vh;">
+    <div>
+        <div class="mr-4 mb-2" style="width: 50px; float: left;">
+            <button class="btn btn-primary w-100" onclick="goBack()"><i class="fas fa-arrow-left"></i></button>
+        </div>
+        <div style="width: calc(100% - 75px); float: left; text-align: center;">
+            <div style="width: fit-content; margin: auto;">
+                <p class="mr-4 mb-2 p-2" style="float: left;">{{file.filename}}</p>
+                <div class="mr-2 mb-2" style="float: left;">
+                    <a class="btn btn-primary w-100" href="?download=">Download</a>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    {% if show_preview == true %}
+    <object data="?preview=" class="bg-light" style="width: 100%; flex-grow : 1;">
+    </object>
+    {% endif %}
+    {% if show_preview != true %}
+    <h4 class="mt-2">Preview for this file not supported</h4>
+    {% endif %}
+</div>
+{% endblock %}
