@@ -2,7 +2,7 @@ var path = require('path');
 
 module.exports.setup = (server) => {
     return {
-        permission: 1,
+        permission: 0,
         navbar: false,
         title: 'Files',
         path: '/file/:path(*)',
