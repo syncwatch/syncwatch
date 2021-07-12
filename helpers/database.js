@@ -96,6 +96,27 @@ module.exports.createDatabase = async (settings) => {
             });
     }
 
+    functions.getMovieSiblings = (moviefile, cb) => {
+        var exts = [settings.EPISODE_EXTENSION].concat(settings.MOVIE_FORMAT_EXTENSIONS);
+        var extor = exts.map(() => 'extension = ?').join(' OR ');
+        db.all(`SELECT * FROM files WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
+            [moviefile.parent, ...exts], (err, siblings) => {
+            var prevs = [];
+            var nexts = [];
+            var reached = false;
+            siblings.forEach((sibling) => {
+                if (moviefile.relpath === sibling.relpath) {
+                    reached = true;
+                } else if (reached) {
+                    nexts.push(sibling);
+                } else {
+                    prevs.push(sibling);
+                }
+            });
+            cb({prev: prevs, next: nexts});
+        });
+    }
+
     functions.updateFiles = (files) => {
         var relpaths = files.map((file) => file.relpath);
 

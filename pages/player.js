@@ -1,4 +1,3 @@
-var uid = require('uid-safe');
 var path = require('path');
 
 module.exports.setup = (server) => {
@@ -22,38 +21,9 @@ module.exports.setup = (server) => {
                 }
             }
 
-            function switchMovie(newMovie) {
-                socket.emit('switch', newMovie);
-                var roomId = socket.request.session.room_id;
-                if (server.rooms_map.has(roomId)) {
-                    server.rooms_map.get(roomId).watching_name = newMovie.name;
-                }
-            }
-
-            socket.on('ready', id => {
-                if (id) {
-                    var rid = id;
-                    if (!server.rooms_map.has(rid)) {
-                        socket.emit('roomJoined', ['SORRY!', 'There is no room with the ID: ' + id]);
-                        socket.disconnect(true);
-                        return;
-                    }
-                    socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + id]);
-
-                    var vid = server.rooms_map.get(rid).watching_id;
-
-                } else {
-                    var rid = uid.sync(server.settings.ROOM_UID_LENGTH);
-                    var vid = socket.request.session.watching_id;
-                    server.rooms_map.set(rid, { watching_id: vid, playing: false, time: 0, time_written: 0 });
-                }
-                if (!vid) {
-                    return;
-                }
-
+            function prepareMovie(vid, cb) {
                 server.db.getMovieFile(vid, (doc) => {
                     if (doc.extension == server.settings.EPISODE_EXTENSION) {
-                        // send video player for episode
                         server.db.getFiles(doc.relpath, (docs) => {
                             var video_id = "";
                             var sub_id = "";
@@ -73,18 +43,30 @@ module.exports.setup = (server) => {
 
                             var episodeName = [doc.series, doc.season, doc.episode].filter((v) => v).join(', ');
 
-                            switchMovie({
-                                name: episodeName,
-                                player: {
-                                    type: 'video',
-                                    sources: [{ src: '/file/' + video_id + '?preview=', type: 'video/mp4' }],
-                                    tracks: [{ default: "", kind: "subtitles", label: "English", src: '/file/' + sub_id + '?preview=', srclang: "en" }]
-                                },
-                                alternatives: alternatives
+                            server.db.getMovieSiblings(doc, (siblings) => {
+                                cb({
+                                    name: episodeName,
+                                    parent: doc.parent,
+                                    prevEpisode: (
+                                        siblings.prev.length > 0
+                                            ? server.helpers.removeExtension(siblings.prev.reverse()[0])
+                                            : null
+                                    ),
+                                    nextEpisode: (
+                                        siblings.next.length > 0
+                                            ? server.helpers.removeExtension(siblings.next[0])
+                                            : null
+                                    ),
+                                    player: {
+                                        type: 'video',
+                                        sources: [{ src: '/file/' + video_id + '?preview=', type: 'video/mp4' }],
+                                        tracks: [{ default: "", kind: "subtitles", label: "English", src: '/file/' + sub_id + '?preview=', srclang: "en" }]
+                                    },
+                                    alternatives: alternatives
+                                });
                             });
                         });
                     } else if (server.settings.MOVIE_FORMAT_EXTENSIONS.includes(doc.extension)) {
-
                         var episodeName = [
                             doc.series,
                             doc.season,
@@ -92,22 +74,107 @@ module.exports.setup = (server) => {
                             path.basename(doc.filename, doc.extension)
                         ].filter((v) => v).join(', ');
 
-                        switchMovie({
-                            name: episodeName,
-                            player: { type: 'video', sources: [{ src: '/file/' + vid + '?preview=', type: 'video/mp4' }] },
-                            backplayer: ""
+                        server.db.getMovieSiblings(doc, (siblings) => {
+                            cb({
+                                name: episodeName,
+                                parent: doc.parent,
+                                prevEpisode: (
+                                    siblings.prev.length > 0
+                                        ? server.helpers.removeExtension(siblings.prev.reverse()[0])
+                                        : null
+                                ),
+                                nextEpisode: (
+                                    siblings.next.length > 0
+                                        ? server.helpers.removeExtension(siblings.next[0])
+                                        : null
+                                ),
+                                player: { type: 'video', sources: [{ src: '/file/' + vid + '?preview=', type: 'video/mp4' }] },
+                                backplayer: ""
+                            });
                         });
                     } else {
-                        socket.emit('roomJoined', ['SORRY!', 'There is no movie with the ID: ' + vid]);
+                        cb(null);
+                    }
+                });
+            }
+
+            function switchMovie(newMovie) {
+                socket.emit('switch', newMovie);
+                var roomId = socket.request.session.room_id;
+                if (server.rooms_map.has(roomId)) {
+                    server.rooms_map.get(roomId).watching_name = newMovie.name;
+                }
+            }
+
+            function switchRoomMovie(newMovie, newDoc) {
+                var roomId = socket.request.session.room_id;
+                server.rooms_map.set(roomId, {
+                    watching_id: newDoc.relpath,
+                    watching_name: newMovie.name,
+                    playing: false,
+                    time: 0,
+                    time_written: 0
+                });
+                server.io.of('/player').to(roomId).emit('switch', newMovie);
+            }
+
+            socket.on('ready', id => {
+                if (id) {
+                    var rid = id;
+                    if (!server.rooms_map.has(rid)) {
+                        socket.emit('roomJoined', ['SORRY!', 'There is no room with the ID: ' + id]);
                         socket.disconnect(true);
                         return;
                     }
+                    socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + id]);
+
+                    var vid = server.rooms_map.get(rid).watching_id;
+
+                } else {
+                    socket.disconnect(true);
+                    return;
+                }
+                if (!vid) {
+                    return;
+                }
+
+                prepareMovie(vid, (movie) => {
+                    if (movie) {
+                        socket.request.session.room_id = rid;
+                        switchMovie(movie);
+                        socket.join(rid);
+                        emitUsersToRoom();
+                        return;
+                    }
+                    socket.emit('roomJoined', ['SORRY!', 'There is no movie with the ID: ' + vid]);
+                    socket.disconnect(true);
                 });
 
-                socket.request.session.room_id = rid;
-                socket.join(rid);
-                emitUsersToRoom();
-                socket.emit('room-id', rid);
+            });
+            socket.on('swepisode', (val) => {
+                var rid = socket.request.session.room_id;
+                var vid = server.rooms_map.get(rid).watching_id;
+
+
+                server.db.getMovieFile(vid, (doc) => {
+                    server.db.getMovieSiblings(doc, (siblings) => {
+                        if (siblings.next.length > 0 && val === 1) {
+                            var newDoc = siblings.next[0];
+                            prepareMovie(newDoc.relpath, (newMovie) => {
+                                if (newMovie) {
+                                    switchRoomMovie(newMovie, newDoc);
+                                }
+                            });
+                        } else if (siblings.prev.length > 0 && val === -1) {
+                            var newDoc = siblings.prev.reverse()[0];
+                            prepareMovie(newDoc.relpath, (newMovie) => {
+                                if (newMovie) {
+                                    switchRoomMovie(newMovie, newDoc);
+                                }
+                            });
+                        }
+                    });
+                });
             });
             socket.on('update', () => {
                 if (!server.rooms_map.has(socket.request.session.room_id)) {

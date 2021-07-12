@@ -1,4 +1,5 @@
 var path = require('path');
+var uid = require('uid-safe');
 
 module.exports.setup = (server) => {
     return {
@@ -22,10 +23,13 @@ module.exports.setup = (server) => {
                 // send video player
                 if (file.extension == server.settings.EPISODE_EXTENSION
                     || server.settings.MOVIE_FORMAT_EXTENSIONS.includes(file.extension)) {
-                    req.session.watching_id = relpath;
-                    res.redirect('/player/');
+
+
+                    var rid = uid.sync(server.settings.ROOM_UID_LENGTH);
+                    server.rooms_map.set(rid, { watching_id: relpath, playing: false, time: 0, time_written: 0 });
+
+                    res.redirect('/room/' + rid);
                     res.end();
-                    res.render('player', server.helpers.getRenderInfo(server.pages, req, { parent: file.parent }));
                     return;
                 }
 
