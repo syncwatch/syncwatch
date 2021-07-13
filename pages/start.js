@@ -10,7 +10,7 @@ module.exports.setup = (server) => {
                     for (var i = 0; i < server.pages.length; i++) {
                         if (server.helpers.hasPermission(req.session.permission, server.pages[i].permission)
                             && server.helpers.valPath(req.query.r.split('/'), server.pages[i].path.split('/'))) {
-                            res.redirect(req.query.r);
+                            res.redirect('//' + req.headers.host + '/' + req.query.r.substring(1));
                             res.end();
                             return;
                         }
