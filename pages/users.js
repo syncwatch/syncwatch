@@ -39,7 +39,7 @@ module.exports.setup = (server) => {
                     onFinish();
                     return;
                 }
-                server.db.createUser(req.body.username, req.body.password, req.body.permission_id, (err, _) => {
+                server.db.createUser(req.body.username, req.body.password, req.body.permission_id, req.body.premium, (err, _) => {
                     if (err) {
                         server.helpers.setInfo(req, err);
                         onFinish();

@@ -32,6 +32,7 @@ module.exports.setup = (server) => {
                         req.session.loggedin = true;
                         req.session.username = row.username;
                         req.session.permission = row.permission;
+                        req.session.premium = row.premium;
                         res.redirect(req.originalUrl);
                         res.end();
                     } else {

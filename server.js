@@ -85,7 +85,7 @@ async function main() {
     });
 
     var sessionMiddleware = session({
-        secret: 'aSavEsecRetForTHesessIon',
+        secret: settings.SESSION_SECRET,
         resave: true,
         saveUninitialized: true
     });
@@ -129,6 +129,7 @@ async function main() {
         'api',
         'player',
         'room',
+        'ad',
     ];
 
     var serverObj = {

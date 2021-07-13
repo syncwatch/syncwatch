@@ -1,4 +1,8 @@
+module.exports.SESSION_SECRET = 'aSavEsecRetForTHesessIon';
+
 module.exports.FILES_PATH = '\\\\192.168.178.30\\Data\\syncwatch';
+
+module.exports.ADS_FOLDER = 'adv-images';
 
 // how long to wait before refreshing the files in seconds
 module.exports.FILES_REFRESH_SECONDS = 10;

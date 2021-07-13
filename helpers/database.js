@@ -7,7 +7,8 @@ module.exports.createDatabase = async (settings) => {
             CREATE TABLE IF NOT EXISTS users (
             username TEXT NOT NULL PRIMARY KEY,
             password TEXT NOT NULL,
-            permission INTEGER NOT NULL
+            permission INTEGER NOT NULL,
+            premium INTEGER NOT NULL
             );
         `);
         db.run(`
@@ -43,19 +44,19 @@ module.exports.createDatabase = async (settings) => {
     }
 
     functions.getUser = (username, password, cb) => {
-        db.get(`SELECT username, permission FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
+        db.get(`SELECT username, permission, premium FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
             cb(row);
         });
     }
 
     functions.getUsers = (permission, cb) => {
-        db.all(`SELECT username, password, permission FROM users WHERE permission <= ?`, [permission], (err, rows) => {
+        db.all(`SELECT username, password, permission, premium FROM users WHERE permission <= ?`, [permission], (err, rows) => {
             cb(rows);
         });
     }
 
-    functions.createUser = (username, password, permission, cb) => {
-        db.run(`INSERT INTO users(username, password, permission) VALUES(?, ?, ?);`, [username, password, permission], [], cb);
+    functions.createUser = (username, password, permission, premium, cb) => {
+        db.run(`INSERT INTO users(username, password, permission, premium) VALUES(?, ?, ?, ?);`, [username, password, permission, (premium ? true : false)], [], cb);
     }
 
     functions.deleteUser = (username, permission, cb) => {
@@ -101,20 +102,20 @@ module.exports.createDatabase = async (settings) => {
         var extor = exts.map(() => 'extension = ?').join(' OR ');
         db.all(`SELECT * FROM files WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
             [moviefile.parent, ...exts], (err, siblings) => {
-            var prevs = [];
-            var nexts = [];
-            var reached = false;
-            siblings.forEach((sibling) => {
-                if (moviefile.relpath === sibling.relpath) {
-                    reached = true;
-                } else if (reached) {
-                    nexts.push(sibling);
-                } else {
-                    prevs.push(sibling);
-                }
+                var prevs = [];
+                var nexts = [];
+                var reached = false;
+                siblings.forEach((sibling) => {
+                    if (moviefile.relpath === sibling.relpath) {
+                        reached = true;
+                    } else if (reached) {
+                        nexts.push(sibling);
+                    } else {
+                        prevs.push(sibling);
+                    }
+                });
+                cb({ prev: prevs, next: nexts });
             });
-            cb({prev: prevs, next: nexts});
-        });
     }
 
     functions.updateFiles = (files) => {

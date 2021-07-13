@@ -97,5 +97,57 @@
         return false;
     });
 </script>
+{% unless session.premium == 1 %}
+<script>
+    function httpGet(theUrl) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open("GET", theUrl, false);
+        xmlHttp.send(null);
+        return xmlHttp.responseText;
+    }
+
+    function cssToVal(cssval) {
+        return +(cssval.replace('px', ''));
+    }
+
+    var ads = JSON.parse(httpGet('/ad'));
+    var ad_images = [];
+    ads.forEach((ad) => {
+        var img = new Image();
+        img.src = ad;
+        ad_images.push(img);
+    });
+
+    function getBestFit(wanted_aspect_ratio) {
+        var best_diff = null;
+        var best_fit = null;
+        ad_images.forEach((img) => {
+            var diff = Math.abs( (img.width/img.height) - wanted_aspect_ratio);
+            if (best_diff === null || diff <= best_diff) {
+                if (diff === best_diff) {
+                    best_fit.push(img.src);
+                } else {
+                    best_diff = diff;
+                    best_fit = [img.src];
+                }
+            }
+        });
+        if (!best_fit) {
+            return '';
+        }
+        if (best_fit.length == 1) {
+            return best_fit[0];
+        }
+
+        return best_fit[Math.round(Math.random() * (best_fit.length - 0.5))];
+    }
+
+    $('.sync-ad').each((i, el) => {
+        var jel = $(el);
+        jel.css('object-fit', 'scale-down');
+        jel.prop('src', getBestFit(cssToVal(jel.css('max-width')) / cssToVal(jel.css('max-height'))));
+    });
+</script>
+{% endunless %}
 
 </html>
