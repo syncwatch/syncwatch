@@ -23,6 +23,10 @@ module.exports.setup = (server) => {
 
             function prepareMovie(vid, cb) {
                 server.db.getMovieFile(vid, (doc) => {
+                    if (!doc) {
+                        cb(null);
+                        return;
+                    }
                     if (doc.extension == server.settings.EPISODE_EXTENSION) {
                         server.db.getFiles(doc.relpath, (docs) => {
                             var video_id = "";
@@ -46,6 +50,7 @@ module.exports.setup = (server) => {
                             server.db.getMovieSiblings(doc, (siblings) => {
                                 cb({
                                     name: episodeName,
+                                    relpath: doc.relpath,
                                     parent: doc.parent,
                                     prevEpisode: (
                                         siblings.prev.length > 0
@@ -77,6 +82,7 @@ module.exports.setup = (server) => {
                         server.db.getMovieSiblings(doc, (siblings) => {
                             cb({
                                 name: episodeName,
+                                relpath: doc.relpath,
                                 parent: doc.parent,
                                 prevEpisode: (
                                     siblings.prev.length > 0
@@ -89,7 +95,6 @@ module.exports.setup = (server) => {
                                         : null
                                 ),
                                 player: { type: 'video', sources: [{ src: '/file/' + vid + '?preview=', type: 'video/mp4' }] },
-                                backplayer: ""
                             });
                         });
                     } else {
@@ -118,15 +123,19 @@ module.exports.setup = (server) => {
                 server.io.of('/player').to(roomId).emit('switch', newMovie);
             }
 
-            socket.on('ready', id => {
-                if (id) {
-                    var rid = id;
+            socket.on('ready', (robj) => {
+                if (robj.room_id) {
+                    var rid = robj.room_id;
                     if (!server.rooms_map.has(rid)) {
-                        socket.emit('roomJoined', ['SORRY!', 'There is no room with the ID: ' + id]);
-                        socket.disconnect(true);
-                        return;
+                        if (rid && robj.movie_id) {
+                            server.rooms_map.set(rid, { watching_id: robj.movie_id, playing: false, time: 0, time_written: 0 });
+                        } else {
+                            socket.emit('roomJoined', ['SORRY!', 'There is no room with the ID: ' + rid]);
+                            socket.disconnect(true);
+                            return;
+                        }
                     }
-                    socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + id]);
+                    socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + rid]);
 
                     var vid = server.rooms_map.get(rid).watching_id;
 
