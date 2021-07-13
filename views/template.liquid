@@ -97,6 +97,11 @@
         return false;
     });
 </script>
+{% if session.premium == 1 %}
+<script>
+    $('.sync-ad').addClass("d-none");
+</script>
+{% endif %}
 {% unless session.premium == 1 %}
 <script>
     function httpGet(theUrl) {
@@ -122,7 +127,7 @@
         var best_diff = null;
         var best_fit = null;
         ad_images.forEach((img) => {
-            var diff = Math.abs( (img.width/img.height) - wanted_aspect_ratio);
+            var diff = Math.abs((img.width / img.height) - wanted_aspect_ratio);
             if (best_diff === null || diff <= best_diff) {
                 if (diff === best_diff) {
                     best_fit.push(img.src);
