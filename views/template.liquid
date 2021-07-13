@@ -124,27 +124,18 @@
     });
 
     function getBestFit(wanted_aspect_ratio) {
-        var best_diff = null;
-        var best_fit = null;
+        var fits = [];
+        var running_fit = 0;
         ad_images.forEach((img) => {
-            var diff = Math.abs((img.width / img.height) - wanted_aspect_ratio);
-            if (best_diff === null || diff <= best_diff) {
-                if (diff === best_diff) {
-                    best_fit.push(img.src);
-                } else {
-                    best_diff = diff;
-                    best_fit = [img.src];
-                }
-            }
+            running_fit += 1 / Math.max(1, Math.abs((img.width / img.height) - wanted_aspect_ratio) * 2);
+            fits.push({src: img.src, fit: running_fit});
         });
-        if (!best_fit) {
-            return '';
+        var choice = Math.random()*running_fit;
+        for (var i = 0; i < fits.length; i++) {
+            if (choice <= fits[i].fit) {
+                return fits[i].src;
+            }
         }
-        if (best_fit.length == 1) {
-            return best_fit[0];
-        }
-
-        return best_fit[Math.round(Math.random() * (best_fit.length - 0.5))];
     }
 
     $('.sync-ad').each((i, el) => {
