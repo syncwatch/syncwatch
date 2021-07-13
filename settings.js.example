@@ -1,0 +1,54 @@
+module.exports.SESSION_SECRET = 'aSavEsecRetForTHesessIon';
+
+module.exports.FILES_PATH = '/';
+
+module.exports.ADS_FOLDER = 'adv-images';
+
+// how long to wait before refreshing the files in seconds
+module.exports.FILES_REFRESH_SECONDS = 10;
+
+module.exports.PERMISSIONS = [
+    'Watcher',
+    'Uploader',
+    'Moderator',
+    'Admin'
+];
+
+// permissions needed to watch server status
+module.exports.STATUS_PERMISSIONS = 2;
+
+module.exports.SERIES_EXTENSION = '.series';
+module.exports.SEASON_EXTENSION = '.season';
+module.exports.EPISODE_EXTENSION = '.episode';
+
+module.exports.CUSTOM_MOVIE_EXTENSIONS = [
+    module.exports.SERIES_EXTENSION,
+    module.exports.SEASON_EXTENSION,
+    module.exports.EPISODE_EXTENSION
+];
+
+module.exports.UPLOAD_PERMISSIONS = 1;
+module.exports.FILE_ACTION_PERMISSIONS = 2;
+
+module.exports.MOVIE_VIDEO_NAME = 'video';
+
+
+// extensions to detect as movies
+module.exports.MOVIE_FORMAT_EXTENSIONS = [
+    '.mkv',
+    '.mp4'
+];
+
+module.exports.MOVIE_SUBTITLE_NAME = 'sub';
+module.exports.SUBTITLE_EXTENSION = '.vtt';
+
+module.exports.MOVIE_EXTENSIONS = module.exports.MOVIE_FORMAT_EXTENSIONS.concat(module.exports.CUSTOM_MOVIE_EXTENSIONS);
+
+// extension to show preview
+module.exports.PREVIEW_EXTENSIONS = ['.pdf', '.mkv', '.py', '.txt', '.mp4', '.html'];
+// maximum file size in MB
+module.exports.MAX_FILE_SIZE = 500 * 1024;
+// after x hours cancel download process
+module.exports.CANCEL_DOWNLOAD_HOURS = 1;
+// length of the room uid ( 7 weil Flos Schwanzlänge in cm)
+module.exports.ROOM_UID_LENGTH = 7;
