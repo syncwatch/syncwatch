@@ -1,6 +1,8 @@
 server.db
 settings.js
 
+styles/adv-images/
+
 # Logs
 logs
 *.log
