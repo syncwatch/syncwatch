@@ -202,7 +202,7 @@
                 document.getElementById('fileName').innerText = source.name;
             }
             if (source.relpath) {
-                history.replaceState({}, null, '?movie=' + source.relpath);
+                history.replaceState({}, null, '?movie=' + encodeURI(source.relpath));
             }
             if (source.parent) {
                 document.getElementById('goBackLink').href = '/movies/' + source.parent;

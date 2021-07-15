@@ -44,7 +44,7 @@ module.exports.setInfo = (req, text, style = 'danger') => {
 }
 
 module.exports.valPath = (query_split, path_split) => {
-    for (var j = 0; j < query_split.length; j++) {
+    for (var j = 0; j < path_split.length; j++) {
         if (path_split[j].charAt(0) == ':' && path_split[j].substr(path_split[j].length - 3, 3) == '(*)') {
             return true;
         }

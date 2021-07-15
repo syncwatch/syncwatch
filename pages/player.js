@@ -128,7 +128,7 @@ module.exports.setup = (server) => {
                     var rid = robj.room_id;
                     if (!server.rooms_map.has(rid)) {
                         if (rid && robj.movie_id) {
-                            server.rooms_map.set(rid, { watching_id: robj.movie_id, playing: false, time: 0, time_written: 0 });
+                            server.rooms_map.set(rid, { watching_id: decodeURI(robj.movie_id), playing: false, time: 0, time_written: 0 });
                         } else {
                             socket.emit('roomJoined', ['SORRY!', 'There is no room with the ID: ' + rid]);
                             socket.disconnect(true);
