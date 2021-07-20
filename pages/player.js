@@ -105,30 +105,25 @@ module.exports.setup = (server) => {
 
             function switchMovie(newMovie) {
                 socket.emit('switch', newMovie);
-                var roomId = socket.request.session.room_id;
-                if (server.rooms_map.has(roomId)) {
-                    server.rooms_map.get(roomId).watching_name = newMovie.name;
-                }
+                server.room_manager.setWatchingName(socket.request.session.room_id, newMovie.name);
             }
 
             function switchRoomMovie(newMovie, newDoc) {
                 var roomId = socket.request.session.room_id;
-                server.rooms_map.set(roomId, {
-                    watching_id: newDoc.relpath,
-                    watching_name: newMovie.name,
-                    playing: false,
-                    time: 0,
-                    time_written: 0
-                });
+
+                server.room_manager.switchRoom(roomId, newDoc.relpath, socket.request.session.username);
+                server.room_manager.setWatchingName(roomId, newMovie.name);
+
                 server.io.of('/player').to(roomId).emit('switch', newMovie);
             }
 
             socket.on('ready', (robj) => {
                 if (robj.room_id) {
                     var rid = robj.room_id;
-                    if (!server.rooms_map.has(rid)) {
+                    if (!server.room_manager.roomExists(rid)) {
                         if (rid && robj.movie_id) {
-                            server.rooms_map.set(rid, { watching_id: decodeURI(robj.movie_id), playing: false, time: 0, time_written: 0 });
+                            server.room_manager.createRoom(rid, decodeURI(robj.movie_id), socket.request.session.username);
+
                         } else {
                             socket.emit('roomJoined', ['SORRY!', 'There is no room with the ID: ' + rid]);
                             socket.disconnect(true);
@@ -137,7 +132,7 @@ module.exports.setup = (server) => {
                     }
                     socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + rid]);
 
-                    var vid = server.rooms_map.get(rid).watching_id;
+                    var vid = server.room_manager.getRoom(rid).watching_id;
 
                 } else {
                     socket.disconnect(true);
@@ -152,6 +147,7 @@ module.exports.setup = (server) => {
                         socket.request.session.room_id = rid;
                         switchMovie(movie);
                         socket.join(rid);
+                        server.room_manager.sendWholeChat(socket, rid);
                         emitUsersToRoom();
                         return;
                     }
@@ -160,9 +156,12 @@ module.exports.setup = (server) => {
                 });
 
             });
+            socket.on('chatMsg', (msg) => {
+                server.room_manager.pushChat(server.io, socket.request.session.room_id, socket.request.session.username + ': ' + msg);
+            });
             socket.on('swepisode', (val) => {
                 var rid = socket.request.session.room_id;
-                var vid = server.rooms_map.get(rid).watching_id;
+                var vid = server.room_manager.getRoom(rid).watching_id;
 
 
                 server.db.getMovieFile(vid, (doc) => {
@@ -186,39 +185,44 @@ module.exports.setup = (server) => {
                 });
             });
             socket.on('update', () => {
-                if (!server.rooms_map.has(socket.request.session.room_id)) {
+                var rid = socket.request.session.room_id;
+                if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                if (server.rooms_map.get(socket.request.session.room_id).playing) {
-                    socket.emit('go', server.rooms_map.get(socket.request.session.room_id).time + ((Date.now() - server.rooms_map.get(socket.request.session.room_id).time_written) / 1000));
+                var room = server.room_manager.getRoom(rid);
+                if (room.playing) {
+                    socket.emit('go', room.time + ((Date.now() - room.time_written) / 1000));
                 } else {
                     socket.emit('pause');
-                    socket.emit('goto', server.rooms_map.get(socket.request.session.room_id).time);
+                    socket.emit('goto', room.time);
                 }
             });
             socket.on('go', (time) => {
-                if (!server.rooms_map.has(socket.request.session.room_id)) {
+                var rid = socket.request.session.room_id;
+                if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(socket.request.session.room_id).emit('go', time);
-                server.rooms_map.get(socket.request.session.room_id).playing = true;
-                server.rooms_map.get(socket.request.session.room_id).time = time;
-                server.rooms_map.get(socket.request.session.room_id).time_written = Date.now();
+                server.io.of('/player').to(rid).emit('go', time);
+                server.room_manager.setPlaying(rid, true);
+                server.room_manager.setTime(rid, time);
+                server.room_manager.setTimeWritten(rid, Date.now());
             });
             socket.on('goto', (time) => {
-                if (!server.rooms_map.has(socket.request.session.room_id)) {
+                var rid = socket.request.session.room_id;
+                if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(socket.request.session.room_id).emit('goto', time);
-                server.rooms_map.get(socket.request.session.room_id).time = time;
-                server.rooms_map.get(socket.request.session.room_id).time_written = Date.now();
+                server.io.of('/player').to(rid).emit('goto', time);
+                server.room_manager.setTime(rid, time);
+                server.room_manager.setTimeWritten(rid, Date.now());
             });
             socket.on('pause', () => {
-                if (!server.rooms_map.has(socket.request.session.room_id)) {
+                var rid = socket.request.session.room_id;
+                if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(socket.request.session.room_id).emit('pause');
-                server.rooms_map.get(socket.request.session.room_id).playing = false;
+                server.io.of('/player').to(rid).emit('pause');
+                server.room_manager.setPlaying(rid, false);
             });
             socket.on('online', () => {
                 socket.request.session.online = true;
@@ -230,8 +234,9 @@ module.exports.setup = (server) => {
             });
             socket.on('disconnect', () => {
                 emitUsersToRoom();
-                if (server.io.of('/player').adapter.rooms.get(socket.request.session.room_id) == undefined || server.io.of('/player').adapter.rooms.get(socket.request.session.room_id).length === 0) {
-                    server.rooms_map.delete(socket.request.session.room_id);
+                var rid = socket.request.session.room_id;
+                if (server.io.of('/player').adapter.rooms.get(rid) == undefined || server.io.of('/player').adapter.rooms.get(rid).length === 0) {
+                    server.room_manager.deleteRoom(rid);
                 }
                 delete socket.request.session.room_id;
             });

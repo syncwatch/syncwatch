@@ -26,7 +26,7 @@ module.exports.setup = (server) => {
 
 
                     var rid = uid.sync(server.settings.ROOM_UID_LENGTH);
-                    server.rooms_map.set(rid, { watching_id: relpath, playing: false, time: 0, time_written: 0 });
+                    server.room_manager.createRoom(rid, relpath, req.session.username);
 
                     res.redirect('/room/' + rid);
                     res.end();

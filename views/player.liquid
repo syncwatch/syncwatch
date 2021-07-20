@@ -71,8 +71,19 @@
         </button>
     </div>
     <div class="mx-auto" style="max-width: 1000px;">
-        <ul class="list-group" id="userList">
-        </ul>
+        <div class="row">
+            <div class="col-md-6 col-12 mb-2">
+                <div class="d-flex flex-column h-100 w-100">
+                    <div id="chatMessages" class="form-control w-100 mb-2 d-flex flex-column flex-grow-1" style="text-align: left; resize: none; font-size: 0.75rem; overflow-x: clip; overflow-y: scroll; min-height: 18vh;" readonly> 
+                    </div>
+                    <input type="text" class="form-control w-100" maxlength="128" onkeydown="chatKeyDown(this)" />
+                </div>
+            </div>
+            <div class="col-md-6 col-12">
+                <ul class="list-group" id="userList">
+                </ul>
+            </div>
+        </div>
     </div>
 </div>
 {% include 'socketio' %}
@@ -125,6 +136,13 @@
         return result;
     }
 
+    function chatKeyDown(el) {
+        if (event.key === 'Enter') {
+            emit('chatMsg', el.value);
+            el.value = '';
+        }
+    }
+
     var initialized = false;
 
     var oldPlayerVolume = 1;
@@ -170,6 +188,14 @@
 
         socket.on('fullscreen-leave', () => {
             player.fullscreen.exit();
+        });
+
+        socket.on('chatMsg', (msg) => {
+            var el = document.createElement('span');
+            el.innerText = msg;
+            chatMessages = document.getElementById('chatMessages');
+            chatMessages.appendChild(el);
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         });
 
         socket.on('roomJoined', (data) => {

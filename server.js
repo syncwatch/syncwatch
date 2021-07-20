@@ -21,7 +21,7 @@ async function main() {
 
     var lastRefresh = 0;
 
-    var rooms_map = new Map();
+    var room_manager = require('./helpers/room_manager.js').createRoomManager();
 
     function log(msg, save = true) {
         helpers.log(msg, save, db);
@@ -142,7 +142,7 @@ async function main() {
         settings,
         refreshFiles,
         checkRefreshFiles,
-        rooms_map,
+        room_manager,
     };
 
     for (var i = 0; i < pages.length; i++) {
