@@ -203,7 +203,10 @@
                 "url": "/api",
                 "data": {
                     "req_url": '{{current_path}}'
-                }
+                },
+                "error": () => {
+                    location.reload();
+                },
             },
             "columns": [
                 { "data": "card" }
