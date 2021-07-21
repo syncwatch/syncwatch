@@ -161,6 +161,10 @@ module.exports.setup = (server) => {
             });
             socket.on('swepisode', (val) => {
                 var rid = socket.request.session.room_id;
+                if (!server.room_manager.roomExists(rid)) {
+                    return;
+                }
+
                 var vid = server.room_manager.getRoom(rid).watching_id;
 
 
