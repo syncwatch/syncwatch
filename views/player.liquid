@@ -255,6 +255,7 @@
             settings_options.audio.values = [settings_options.audio.values[0]].concat(alternative_audios);
             document.getElementById('expanded_settings').innerHTML = generateSettings();
             setAudioTrack();
+            retrieveCaptionSettings();
         });
     });
 
