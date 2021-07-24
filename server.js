@@ -122,6 +122,7 @@ async function main() {
         'movies',
         'upload',
         'users',
+        'watched',
         'log',
         'stats',
         'logout',

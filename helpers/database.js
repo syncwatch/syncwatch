@@ -29,6 +29,14 @@ module.exports.createDatabase = async (settings) => {
             extension TEXT NOT NULL
             );
         `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS watched (
+            username TEXT NOT NULL,
+            relpath2 TEXT NOT NULL,
+            percentage INTEGER NOT NULL,
+            PRIMARY KEY (username, relpath2)
+            );
+        `);
     });
 
     var functions = {};
@@ -63,6 +71,16 @@ module.exports.createDatabase = async (settings) => {
         db.run(`DELETE FROM users WHERE username = ? AND permission <= ?`, [username, permission], cb);
     }
 
+    functions.updateWatchedPercentage = (username, relpath, percentage) => {
+        db.run(`INSERT OR REPLACE INTO watched(username, relpath2, percentage) VALUES(?, ?, ?);`, [username, relpath, percentage]);
+    }
+
+    functions.getWatchedPercentages = (username, cb) => {
+        db.all(`SELECT * FROM watched WHERE username = ? ORDER BY relpath2 ASC`, [username], (err, rows) => {
+            cb(rows);
+        });
+    }
+
     functions.getFiles = (parent, cb) => {
         db.all(`SELECT * FROM files WHERE parent = ? ORDER BY relpath ASC`, [parent], (err, rows) => {
             cb(rows);
@@ -81,9 +99,9 @@ module.exports.createDatabase = async (settings) => {
         });
     }
 
-    functions.getMovieFiles = (parent, cb) => {
+    functions.getMovieFiles = (username, parent, cb) => {
         var extor = settings.MOVIE_EXTENSIONS.map(() => 'extension = ?').join(' OR ');
-        db.all(`SELECT * FROM files WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
+        db.all(`SELECT * FROM files LEFT JOIN watched ON files.relpath = watched.relpath2 WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
             [parent, ...settings.MOVIE_EXTENSIONS], (err, rows) => {
                 cb(rows);
             });

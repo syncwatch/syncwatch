@@ -9,8 +9,8 @@ module.exports.setup = (server) => {
         title: 'Api',
         path: '/api',
         cb: (req, res) => {
-            function makeCard(doc, link) {
-                return server.engine.renderFileSync('table-card', {
+            function makeCard(doc, link, card) {
+                return server.engine.renderFileSync(card, {
                     title: doc.relpath.substring(0, doc.relpath.length - doc.filename.length - 1),
                     link: link,
                     doc: doc
@@ -36,7 +36,7 @@ module.exports.setup = (server) => {
                         res.json({
                             data: result.map((d) => {
                                 return {
-                                    card: makeCard(d.item, 'file')
+                                    card: makeCard(d.item, 'file', 'table-card')
                                 };
                             })
                         });
@@ -47,7 +47,7 @@ module.exports.setup = (server) => {
                         res.json({
                             data: docs.map((doc) => {
                                 return {
-                                    card: makeCard(doc, 'file')
+                                    card: makeCard(doc, 'file', 'table-card')
                                 };
                             })
                         });
@@ -58,7 +58,7 @@ module.exports.setup = (server) => {
             } else if (split_req[0] == 'movies') {
 
                 if (req.query.search && req.query.search.value) {
-                    server.db.getMovieFiles(parent, (docs) => {
+                    server.db.getMovieFiles(req.session.username, parent, (docs) => {
                         var fuse = new Fuse(docs.map((d) => {
                             d.search = d.relpath.replace(/\\\//g, ' ').replace(/\./g, ' ');
                             return d;
@@ -67,18 +67,18 @@ module.exports.setup = (server) => {
                         res.json({
                             data: result.map((d) => {
                                 return {
-                                    card: makeCard(d.item, 'movies')
+                                    card: makeCard(d.item, 'movies', 'table-movie-card')
                                 };
                             })
                         });
                     });
 
                 } else {
-                    server.db.getMovieFiles(parent, (docs) => {
+                    server.db.getMovieFiles(req.session.username, parent, (docs) => {
                         res.json({
                             data: docs.map((doc) => {
                                 return {
-                                    card: makeCard(doc, 'movies')
+                                    card: makeCard(doc, 'movies', 'table-movie-card')
                                 };
                             })
                         });

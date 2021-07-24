@@ -260,11 +260,11 @@
     });
 
     function playerSeeked(event) {
-        emit('goto', player.currentTime);
+        emit('goto', {time: player.currentTime, duration: player.duration});
     }
 
     function playerPlayed(event) {
-        emit('go', player.currentTime);
+        emit('go', {time: player.currentTime, duration: player.duration});
     }
 
     function playerPaused(event) {

@@ -9,6 +9,7 @@ module.exports.createRoomManager = () => {
             playing: false,
             time: 0,
             time_written: 0,
+            duration: 0,
             chat: []
         });
     };
@@ -88,6 +89,12 @@ module.exports.createRoomManager = () => {
     room_manager.setTimeWritten = (room_id, time_written) => {
         if (rooms_map.has(room_id)) {
             rooms_map.get(room_id).time_written = time_written;
+        }
+    };
+
+    room_manager.setDuration = (room_id, duration) => {
+        if (rooms_map.has(room_id)) {
+            rooms_map.get(room_id).duration = duration;
         }
     };
 

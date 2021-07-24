@@ -201,24 +201,26 @@ module.exports.setup = (server) => {
                     socket.emit('goto', room.time);
                 }
             });
-            socket.on('go', (time) => {
+            socket.on('go', (data) => {
                 var rid = socket.request.session.room_id;
                 if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(rid).emit('go', time);
+                server.io.of('/player').to(rid).emit('go', data.time);
                 server.room_manager.setPlaying(rid, true);
-                server.room_manager.setTime(rid, time);
+                server.room_manager.setTime(rid, data.time);
                 server.room_manager.setTimeWritten(rid, Date.now());
+                server.room_manager.setDuration(rid, data.duration);
             });
-            socket.on('goto', (time) => {
+            socket.on('goto', (data) => {
                 var rid = socket.request.session.room_id;
                 if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(rid).emit('goto', time);
-                server.room_manager.setTime(rid, time);
+                server.io.of('/player').to(rid).emit('goto', data.time);
+                server.room_manager.setTime(rid, data.time);
                 server.room_manager.setTimeWritten(rid, Date.now());
+                server.room_manager.setDuration(rid, data.duration);
             });
             socket.on('pause', () => {
                 var rid = socket.request.session.room_id;
@@ -239,6 +241,17 @@ module.exports.setup = (server) => {
             socket.on('disconnect', () => {
                 emitUsersToRoom();
                 var rid = socket.request.session.room_id;
+                var room = server.room_manager.getRoom(rid);
+                var rtime = room.time;
+                if (room.playing) {
+                    rtime = room.time + ((Date.now() - room.time_written) / 1000);
+                }
+                var percentage = 0;
+                if (room.duration && room.duration > 0) {
+                    percentage = rtime * 100 / room.duration;
+                    server.db.updateWatchedPercentage(socket.request.session.username, room.watching_id, percentage);
+                }
+
                 if (server.io.of('/player').adapter.rooms.get(rid) == undefined || server.io.of('/player').adapter.rooms.get(rid).length === 0) {
                     server.room_manager.deleteRoom(rid);
                 }
