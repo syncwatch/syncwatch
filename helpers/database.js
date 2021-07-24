@@ -102,8 +102,8 @@ module.exports.createDatabase = async (settings) => {
 
     functions.getMovieFiles = (username, parent, cb) => {
         var extor = settings.MOVIE_EXTENSIONS.map(() => 'extension = ?').join(' OR ');
-        db.all(`SELECT * FROM files LEFT JOIN watched ON files.relpath = watched.relpath2 WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
-            [parent, ...settings.MOVIE_EXTENSIONS], (err, rows) => {
+        db.all(`SELECT * FROM files LEFT JOIN watched ON files.relpath = watched.relpath2 AND username = ? WHERE parent = ? AND (` + extor + `) ORDER BY relpath ASC`,
+            [username, parent, ...settings.MOVIE_EXTENSIONS], (err, rows) => {
                 cb(rows);
             });
     }
