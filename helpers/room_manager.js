@@ -64,7 +64,11 @@ module.exports.createRoomManager = () => {
     };
 
     room_manager.pushChat = (io, room_id, msg) => {
-        rooms_map.get(room_id).chat.push(msg);
+        var room = rooms_map.get(room_id);
+        if (!room) {
+            return;
+        }
+        room.chat.push(msg);
         io.of('/player').to(room_id).emit('chatMsg', msg);
     };
 

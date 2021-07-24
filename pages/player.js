@@ -194,6 +194,9 @@ module.exports.setup = (server) => {
                     return;
                 }
                 var room = server.room_manager.getRoom(rid);
+                if (!room) {
+                    return;
+                }
                 if (room.playing) {
                     socket.emit('go', room.time + ((Date.now() - room.time_written) / 1000));
                 } else {
@@ -206,21 +209,29 @@ module.exports.setup = (server) => {
                 if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(rid).emit('go', data.time);
-                server.room_manager.setPlaying(rid, true);
-                server.room_manager.setTime(rid, data.time);
-                server.room_manager.setTimeWritten(rid, Date.now());
-                server.room_manager.setDuration(rid, data.duration);
+                if (data.time) {
+                    server.io.of('/player').to(rid).emit('go', data.time);
+                    server.room_manager.setPlaying(rid, true);
+                    server.room_manager.setTime(rid, data.time);
+                    server.room_manager.setTimeWritten(rid, Date.now());
+                }
+                if (data.duration) {
+                    server.room_manager.setDuration(rid, data.duration);
+                }
             });
             socket.on('goto', (data) => {
                 var rid = socket.request.session.room_id;
                 if (!server.room_manager.roomExists(rid)) {
                     return;
                 }
-                server.io.of('/player').to(rid).emit('goto', data.time);
-                server.room_manager.setTime(rid, data.time);
-                server.room_manager.setTimeWritten(rid, Date.now());
-                server.room_manager.setDuration(rid, data.duration);
+                if (data.time) {
+                    server.io.of('/player').to(rid).emit('goto', data.time);
+                    server.room_manager.setTime(rid, data.time);
+                    server.room_manager.setTimeWritten(rid, Date.now());
+                }
+                if (data.duration) {
+                    server.room_manager.setDuration(rid, data.duration);
+                }
             });
             socket.on('pause', () => {
                 var rid = socket.request.session.room_id;
@@ -242,6 +253,10 @@ module.exports.setup = (server) => {
                 emitUsersToRoom();
                 var rid = socket.request.session.room_id;
                 var room = server.room_manager.getRoom(rid);
+                if (!room) {
+                    delete socket.request.session.room_id;
+                    return;
+                }
                 var rtime = room.time;
                 if (room.playing) {
                     rtime = room.time + ((Date.now() - room.time_written) / 1000);
