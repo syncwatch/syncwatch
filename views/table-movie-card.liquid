@@ -1,7 +1,7 @@
 <div class="card">
     <div class="progress">
-        <div class="progress-bar" role="progressbar" style="width: {{doc.percentage}}%"
-            aria-valuenow="{{doc.percentage}}" aria-valuemin="0" aria-valuemax="100"></div>
+        <div class="progress-bar" role="progressbar" style="width: {{doc.percentage | round}}%"
+            aria-valuenow="{{doc.percentage | round}}" aria-valuemin="0" aria-valuemax="100"></div>
     </div>
     <div class="card-body">
         <a href="/{{link}}/{{doc.relpath}}" data-id="{{doc.relpath}}" class="stretched-link color-primary">

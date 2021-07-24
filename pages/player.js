@@ -263,7 +263,7 @@ module.exports.setup = (server) => {
                 }
                 var percentage = 0;
                 if (room.duration && room.duration > 0) {
-                    percentage = rtime * 100 / room.duration;
+                    percentage = Math.min(100, rtime * 100 / room.duration);
                     server.db.updateWatchedPercentage(socket.request.session.username, room.watching_id, percentage);
                 }
 
