@@ -26,7 +26,8 @@ module.exports.createDatabase = async (settings) => {
             episode TEXT,
             filename TEXT NOT NULL,
             directory INTEGER NOT NULL,
-            extension TEXT NOT NULL
+            extension TEXT NOT NULL,
+            addedtime INTEGER NOT NULL
             );
         `);
         db.run(`
@@ -136,6 +137,15 @@ module.exports.createDatabase = async (settings) => {
             });
     }
 
+    functions.getMoviesByAddedTime = (amount, cb) => {
+        var exts = settings.MOVIE_FORMAT_EXTENSIONS;
+        var extor = exts.map(() => 'extension = ?').join(' OR ');
+        db.all(`SELECT * FROM files WHERE ((` + extor + `) AND episode IS NULL) OR extension = ? ORDER BY addedtime DESC, relpath ASC LIMIT ?`,
+            [...exts, settings.EPISODE_EXTENSION, amount], (err, rows) => {
+                cb(rows);
+            });
+    }
+
     functions.updateFiles = (files) => {
         var relpaths = files.map((file) => file.relpath);
 
@@ -153,9 +163,10 @@ module.exports.createDatabase = async (settings) => {
                     }
                 });
 
-                var sql = `INSERT OR REPLACE INTO files(relpath, parent, series, season, episode, filename, directory, extension) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+                var sql = `INSERT OR REPLACE INTO files(relpath, parent, series, season, episode, filename, directory, extension, addedtime) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`;
 
                 var stmt = db.prepare(sql);
+                var curtime = Date.now();
                 for (var i = 0; i < files.length; i++) {
                     var f = files[i];
                     if (!foundfiles.includes(f.relpath)) {
@@ -167,7 +178,8 @@ module.exports.createDatabase = async (settings) => {
                             f.episode,
                             f.filename,
                             f.directory,
-                            f.extension
+                            f.extension,
+                            curtime,
                         ]);
                     }
                 }

@@ -2,6 +2,16 @@
 {% block content %}
 {% include 'nav' %}
 <div style="margin: 10px;">
+    <div class="card mb-4">
+        <h5 class="card-header">New Movies:</h5>
+        <div class="card-body">
+            <ul class="list-group">
+                {% for movie in movies %}
+                <a class="list-group-item btn btn-primary stretched-link" href="/movies/{{movie.relpath}}">{{movie.name}}</a>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
     <p class="h4 mb-2 mt-2">Rooms:</p>
     <div class="card-deck w-100" style="margin: 0;" id="room-cards">
     </div>
@@ -14,15 +24,15 @@
             document.getElementById("room-cards").innerHTML = rooms.map(room => {
                 return `
                 <div class="card m-2" style="min-width: 200px;">
-                    <h5 class="card-header">`+room.status+`</h5>
+                    <h5 class="card-header">`+ room.status + `</h5>
                     <div class="card-body">
                         <h5 class="card-title">Users:</h5>
                         <ul class="list-group">`+
-                            room.users.map((user) => {
-                                return '<li class="list-group-item">'+user+'</li>';
-                            }).join('')
-                        +`</ul>
-                        <a href="/room/`+room.id+`" class="btn btn-primary stretched-link mt-2">Join</a>
+                    room.users.map((user) => {
+                        return '<li class="list-group-item">' + user + '</li>';
+                    }).join('')
+                    + `</ul>
+                        <a href="/room/`+ room.id + `" class="btn btn-primary stretched-link mt-2">Join</a>
                     </div>
                 </div>
                 `;
