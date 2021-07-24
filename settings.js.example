@@ -45,7 +45,7 @@ module.exports.SUBTITLE_EXTENSION = '.vtt';
 module.exports.MOVIE_EXTENSIONS = module.exports.MOVIE_FORMAT_EXTENSIONS.concat(module.exports.CUSTOM_MOVIE_EXTENSIONS);
 
 // extension to show preview
-module.exports.PREVIEW_EXTENSIONS = ['.pdf', '.mkv', '.py', '.txt', '.mp4', '.html'];
+module.exports.PREVIEW_EXTENSIONS = ['.pdf', '.mkv', '.py', '.txt', '.mp4', '.html', '.vtt'];
 // maximum file size in MB
 module.exports.MAX_FILE_SIZE = 500 * 1024;
 // after x hours cancel download process
