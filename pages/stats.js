@@ -2,6 +2,7 @@ module.exports.setup = (server) => {
     return {
         permission: server.settings.STATUS_PERMISSIONS,
         navbar: true,
+        nav_align: 'left',
         title: 'Stats',
         path: '/stats',
         cb: (req, res) => {

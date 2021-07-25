@@ -2,6 +2,7 @@ module.exports.setup = (server) => {
     return {
         permission: 2,
         navbar: true,
+        nav_align: 'left',
         title: 'Users',
         path: '/users',
         cb: (req, res) => {

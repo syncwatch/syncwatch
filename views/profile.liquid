@@ -1,0 +1,59 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+
+<div style="margin: 10px; height: 100%;">
+    <div class="mx-auto mt-1 mb-3">
+        <span class="h5">Username: {{username}}</span>
+    </div>
+    <div class="jumbotron" style="padding: 1rem 1rem;">
+        <h4>Premium Plan</h4>
+        <form action="" method="POST">
+            <div class="input-group">
+                <div class="mx-auto">
+                    <button class="btn btn-primary" style="width: 200px;" type="submit" name="changePremium">
+                        {% if session.premium == 1 %}
+                        Cancel Premium Plan
+                        {% else %}
+                        Buy Premium Plan
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+    <div class="jumbotron" style="padding: 1rem 1rem;">
+        <h4>Change Password</h4>
+        <form action="" method="POST">
+            <div class="input-group">
+                <div class="mx-auto">
+                    <label for="inputOldPassword" class="mb-2 mr-2">Old Password:</label>
+                    <input type="password" name="oldPassword" class="form-control mb-2 mr-2" id="inputOldPassword"
+                        required>
+                </div>
+            </div>
+            <h4 class="text-danger">Please do not use a password you use anywhere else, we do not encrypt passwords!</h4>
+            <div class="input-group">
+                <div class="mx-auto">
+                    <label for="inputNewPassword" class="mb-2 mr-2">New Password:</label>
+                    <input type="password" name="newPassword" class="form-control mb-2 mr-2" id="inputNewPassword"
+                        minlength="3" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <div class="mx-auto">
+                    <label for="inputReapeatPassword" class="mb-2 mr-2">Repeat New Password:</label>
+                    <input type="password" name="newPassword2" class="form-control mb-2 mr-2" id="inputReapeatPassword"
+                        minlength="3" required>
+                </div>
+            </div>
+            <div class="input-group">
+                <div class="mx-auto">
+                    <button class="btn btn-primary" style="width: 200px;" type="submit" name="changePassword">Change
+                        Password</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

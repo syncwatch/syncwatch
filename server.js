@@ -125,6 +125,7 @@ async function main() {
         'watched',
         'log',
         'stats',
+        'profile',
         'logout',
         'start',
         'api',

@@ -11,14 +11,24 @@
         <ul class="navbar-nav mr-auto">
             {% for page in pages %}
             {% if page.navbar != false %}
+            {% if page.nav_align == 'left' %}
             <li class="nav-item{% if page.path == current_path %} active{% endif %}"><a class="nav-link"
                     href="{{page.path}}">{{page.title}}{% if page.path == current_path %}<span
                         class="sr-only">(current)</span>{% endif %}</a></li>
             {% endif %}
+            {% endif %}
             {% endfor %}
-
         </ul>
         <ul class="navbar-nav">
+            {% for page in pages %}
+            {% if page.navbar != false %}
+            {% if page.nav_align == 'right' %}
+            <li class="nav-item{% if page.path == current_path %} active{% endif %}"><a class="nav-link"
+                    href="{{page.path}}">{{page.title}}{% if page.path == current_path %}<span
+                        class="sr-only">(current)</span>{% endif %}</a></li>
+            {% endif %}
+            {% endif %}
+            {% endfor %}
             <div class="nav-item dropdown">
                 <a id="styleDropdown" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true"
                     aria-expanded="false">Style</a>

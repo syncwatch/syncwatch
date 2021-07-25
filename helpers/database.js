@@ -73,6 +73,14 @@ module.exports.createDatabase = async (settings) => {
         db.run(`DELETE FROM users WHERE username = ? AND permission <= ?`, [username, permission], cb);
     }
 
+    functions.changeUserPassword = (username, oldpassword, newpassword, cb) => {
+        db.run(`UPDATE users SET password = ? WHERE username = ? AND password = ?;`, [newpassword, username, oldpassword], cb);
+    }
+
+    functions.setUserPremium = (username, premium, cb) => {
+        db.run(`UPDATE users SET premium = ? WHERE username = ?;`, [premium, username], cb);
+    }
+
     functions.updateWatchedPercentage = (username, relpath, percentage) => {
         db.run(`INSERT OR REPLACE INTO watched(username, relpath2, percentage, time) VALUES(?, ?, ?, ?);`, [username, relpath, percentage, Date.now()]);
     }

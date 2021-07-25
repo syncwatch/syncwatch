@@ -5,6 +5,8 @@ var fs = require('fs');
 module.exports.setup = (server) => {
     return {
         permission: server.settings.UPLOAD_PERMISSIONS,
+        navbar: true,
+        nav_align: 'left',
         title: 'Upload',
         path: '/upload',
         cb: (req, res) => {

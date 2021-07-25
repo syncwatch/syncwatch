@@ -185,3 +185,7 @@ module.exports.createIncPath = (fpath, fname, seperator = '_', starting_i = 1) =
 module.exports.makeSaveFileName = (name) => {
     return name.replace(/[^\w\d\s\.\-]/g, "");
 }
+
+module.exports.passwordCompliance = (password) => {
+    return password.length > 2;
+}

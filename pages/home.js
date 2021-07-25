@@ -4,6 +4,7 @@ module.exports.setup = (server) => {
     return {
         permission: 0,
         navbar: true,
+        nav_align: 'left',
         title: 'Home',
         path: '/home',
         cb: (req, res) => {
