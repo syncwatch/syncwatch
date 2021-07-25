@@ -35,6 +35,7 @@ module.exports.createDatabase = async (settings) => {
             username TEXT NOT NULL,
             relpath2 TEXT NOT NULL,
             percentage INTEGER NOT NULL,
+            time INTEGER NOT NULL,
             PRIMARY KEY (username, relpath2)
             );
         `);
@@ -73,11 +74,11 @@ module.exports.createDatabase = async (settings) => {
     }
 
     functions.updateWatchedPercentage = (username, relpath, percentage) => {
-        db.run(`INSERT OR REPLACE INTO watched(username, relpath2, percentage) VALUES(?, ?, ?);`, [username, relpath, percentage]);
+        db.run(`INSERT OR REPLACE INTO watched(username, relpath2, percentage, time) VALUES(?, ?, ?, ?);`, [username, relpath, percentage, Date.now()]);
     }
 
     functions.getWatchedPercentages = (username, cb) => {
-        db.all(`SELECT * FROM watched WHERE username = ? ORDER BY relpath2 ASC`, [username], (err, rows) => {
+        db.all(`SELECT * FROM watched WHERE username = ? ORDER BY time DESC, relpath2 ASC`, [username], (err, rows) => {
             cb(rows);
         });
     }

@@ -6,6 +6,7 @@
         <tr>
             <th>Movie</th>
             <th>Percentage</th>
+            <th>Time</th>
         </tr>
     </thead>
     <tbody>
@@ -13,6 +14,7 @@
         <tr>
             <td>{{watch.relpath2}}</td>
             <td>{{watch.percentage  | round: 0}} %</td>
+            <td><script>document.write(new Date(+"{{watch.time}}").toLocaleString());</script></td>
         </tr>
         {% endfor %}
     </tbody>
