@@ -111,6 +111,30 @@ module.exports.setup = (server) => {
             function switchRoomMovie(newMovie, newDoc) {
                 var roomId = socket.request.session.room_id;
 
+                var room = server.room_manager.getRoom(roomId);
+
+                var socketroom = server.io.of('/player').adapter.rooms.get(roomId);
+                
+                if (!room || !socketroom) {
+                    return;
+                }
+
+                var rtime = room.time;
+                if (room.playing) {
+                    rtime = room.time + ((Date.now() - room.time_written) / 1000);
+                }
+                var percentage = 0;
+                if (room.duration && room.duration > 0) {
+                    percentage = Math.min(100, rtime * 100 / room.duration);
+
+                    if (percentage > 0) {
+                        socketroom.forEach(cid => {
+                            var user = server.io.of('/player').sockets.get(cid);
+                            server.db.updateWatchedPercentage(user.request.session.username, room.watching_id, percentage);
+                        });
+                    }
+                }
+
                 server.room_manager.switchRoom(roomId, newDoc.relpath, socket.request.session.username);
                 server.room_manager.setWatchingName(roomId, newMovie.name);
 
@@ -264,7 +288,9 @@ module.exports.setup = (server) => {
                 var percentage = 0;
                 if (room.duration && room.duration > 0) {
                     percentage = Math.min(100, rtime * 100 / room.duration);
-                    server.db.updateWatchedPercentage(socket.request.session.username, room.watching_id, percentage);
+                    if (percentage > 0) {
+                        server.db.updateWatchedPercentage(socket.request.session.username, room.watching_id, percentage);
+                    }
                 }
 
                 if (server.io.of('/player').adapter.rooms.get(rid) == undefined || server.io.of('/player').adapter.rooms.get(rid).length === 0) {
