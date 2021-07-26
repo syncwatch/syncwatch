@@ -59,7 +59,9 @@
             </video>
         </div>
     </div>
-    <div class="d-flex mb-2">
+    <div class="d-flex mb-2 mx-auto" style="max-width: 1000px;">
+        <button type="button" class="btn btn-primary mr-1 d-none" id="prevWatchedButton" onclick="skipToPrev()">Skip to
+            <span id="prevWatchedTime">-</span></button>
         <p class="ml-auto my-auto mr-2">Choose Episode:</p>
         <button type="button" class="btn btn-primary mr-1" id="prevEpisodeButton" disabled onclick="switchEpisode(-1)"
             data-toggle="tooltip" data-html="true" data-placement="bottom" title="">
@@ -74,7 +76,9 @@
         <div class="row">
             <div class="col-md-6 col-12 mb-2">
                 <div class="d-flex flex-column h-100 w-100">
-                    <div id="chatMessages" class="form-control w-100 mb-2 d-flex flex-column flex-grow-1" style="text-align: left; resize: none; font-size: 0.75rem; overflow-x: clip; overflow-y: scroll; min-height: 18vh;" readonly> 
+                    <div id="chatMessages" class="form-control w-100 mb-2 d-flex flex-column flex-grow-1"
+                        style="text-align: left; resize: none; font-size: 0.75rem; overflow-x: clip; overflow-y: scroll; min-height: 18vh;"
+                        readonly>
                     </div>
                     <input type="text" class="form-control w-100" maxlength="128" onkeydown="chatKeyDown(this)" />
                 </div>
@@ -88,11 +92,21 @@
 </div>
 {% include 'socketio' %}
 <script>
+    function secondsToTime(e) {
+        var h = Math.floor(e / 3600).toString().padStart(2, '0'),
+            m = Math.floor(e % 3600 / 60).toString().padStart(2, '0'),
+            s = Math.floor(e % 60).toString().padStart(2, '0');
+
+        return h + ':' + m + ':' + s;
+    }
+
     $(function () {
         $('[data-toggle="tooltip"]').tooltip();
     });
 
     var socket;
+    var currentSource;
+
     function emit(key, data = undefined) {
         socket.emit(key, data);
     }
@@ -119,6 +133,12 @@
 
     function switchEpisode(value) {
         emit('swepisode', value);
+    }
+
+    function skipToPrev() {
+        if (currentSource && currentSource.percentage) {
+            player.currentTime = player.duration * 0.01 * currentSource.percentage;
+        }
     }
 
     function getParams() {
@@ -220,6 +240,7 @@
             player.pause();
         });
         socket.on('switch', (source) => {
+            currentSource = source;
 
             $("#prevEpisodeButton").tooltip("hide");
             $("#nextEpisodeButton").tooltip("hide");
@@ -248,6 +269,11 @@
             } else {
                 document.getElementById('nextEpisodeButton').disabled = true;
             }
+            if (source.percentage) {
+                $('#prevWatchedButton').removeClass('d-none');
+            } else {
+                $('#prevWatchedButton').addClass('d-none');
+            }
             var alternative_audios = [];
             if (source.alternatives) {
                 alternative_audios = source.alternatives;
@@ -260,11 +286,11 @@
     });
 
     function playerSeeked(event) {
-        emit('goto', {time: player.currentTime, duration: player.duration});
+        emit('goto', { time: player.currentTime, duration: player.duration });
     }
 
     function playerPlayed(event) {
-        emit('go', {time: player.currentTime, duration: player.duration});
+        emit('go', { time: player.currentTime, duration: player.duration });
     }
 
     function playerPaused(event) {
@@ -740,6 +766,14 @@
     player.on('ready', event => {
         changeVolume(oldPlayerVolume);
         onResize();
+    });
+
+    player.on('loadedmetadata', event => {
+        if (currentSource && currentSource.percentage) {
+            $('#prevWatchedTime').text(secondsToTime(player.duration * 0.01 * currentSource.percentage));
+        } else {
+            $('#prevWatchedTime').text('-');
+        }
     });
 
     document.body.onresize = onResize;

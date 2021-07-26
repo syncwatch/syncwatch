@@ -103,9 +103,13 @@ module.exports.setup = (server) => {
                 });
             }
 
-            function switchMovie(newMovie) {
-                socket.emit('switch', newMovie);
-                server.room_manager.setWatchingName(socket.request.session.room_id, newMovie.name);
+            function switchMovie(s, newMovie) {
+                server.db.getWatchedPercentage(s.request.session.username, newMovie.relpath, (row) => {
+                    if (row) {
+                        newMovie.percentage = row.percentage;
+                    }
+                    s.emit('switch', newMovie);
+                });
             }
 
             function switchRoomMovie(newMovie, newDoc) {
@@ -138,7 +142,13 @@ module.exports.setup = (server) => {
                 server.room_manager.switchRoom(roomId, newDoc.relpath, socket.request.session.username);
                 server.room_manager.setWatchingName(roomId, newMovie.name);
 
-                server.io.of('/player').to(roomId).emit('switch', newMovie);
+                var room = server.io.of('/player').adapter.rooms.get(roomId);
+                if (room) {
+                    room.forEach(cid => {
+                        var user = server.io.of('/player').sockets.get(cid);
+                        switchMovie(user, newMovie);
+                    });
+                }
             }
 
             socket.on('ready', (robj) => {
@@ -169,7 +179,8 @@ module.exports.setup = (server) => {
                 prepareMovie(vid, (movie) => {
                     if (movie) {
                         socket.request.session.room_id = rid;
-                        switchMovie(movie);
+                        switchMovie(socket, movie);
+                        server.room_manager.setWatchingName(rid, movie.name);
                         socket.join(rid);
                         server.room_manager.sendWholeChat(socket, rid);
                         emitUsersToRoom();

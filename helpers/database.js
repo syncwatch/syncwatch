@@ -85,6 +85,12 @@ module.exports.createDatabase = async (settings) => {
         db.run(`INSERT OR REPLACE INTO watched(username, relpath2, percentage, time) VALUES(?, ?, ?, ?);`, [username, relpath, percentage, Date.now()]);
     }
 
+    functions.getWatchedPercentage = (username, relpath, cb) => {
+        db.get(`SELECT * FROM watched WHERE username = ? AND relpath2 = ?`, [username, relpath], (err, row) => {
+            cb(row);
+        });
+    }
+
     functions.getWatchedPercentages = (username, cb) => {
         db.all(`SELECT * FROM watched WHERE username = ? ORDER BY time DESC, relpath2 ASC`, [username], (err, rows) => {
             cb(rows);
