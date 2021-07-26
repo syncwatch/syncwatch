@@ -2,12 +2,21 @@
 {% block content %}
 {% include 'nav' %}
 <div style="margin: 10px;">
+    {% if watched %}
+    <div class="card mb-3">
+        <ul class="list-group">
+            <a class="list-group-item btn btn-primary stretched-link" href="/movies/{{watched.relpath2}}"><span
+                    class="h5">Continue watching: </span>{{watched.relpath2}}</a>
+        </ul>
+    </div>
+    {% endif %}
     <div class="card mb-4">
         <h5 class="card-header">New Movies:</h5>
         <div class="card-body">
             <ul class="list-group">
                 {% for movie in movies %}
-                <a class="list-group-item btn btn-primary stretched-link" href="/movies/{{movie.relpath}}">{{movie.name}}</a>
+                <a class="list-group-item btn btn-primary stretched-link"
+                    href="/movies/{{movie.relpath}}">{{movie.name}}</a>
                 {% endfor %}
             </ul>
         </div>

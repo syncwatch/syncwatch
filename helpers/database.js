@@ -91,6 +91,12 @@ module.exports.createDatabase = async (settings) => {
         });
     }
 
+    functions.getLatestWatchedPercentage = (username, cb) => {
+        db.get(`SELECT * FROM watched WHERE username = ? ORDER BY time DESC LIMIT 1`, [username], (err, row) => {
+            cb(row);
+        });
+    }
+
     functions.getWatchedPercentages = (username, cb) => {
         db.all(`SELECT * FROM watched WHERE username = ? ORDER BY time DESC, relpath2 ASC`, [username], (err, rows) => {
             cb(rows);
