@@ -8,7 +8,7 @@ File sharing and synced video streaming server to watch movies with your best fr
 
 - rooms with synced videoplayers and chat
 - multiple audio tracks for different languages and subtitles per video
-- watchtime tracking and fast forward to the position where you stopped watched the last time 
+- watchtime tracking and fast forward to the position where you stopped the last time 
 - easy download of files and movies from youtube using [youtube-dl](https://github.com/ytdl-org/youtube-dl)
 - different styles to please your eyes at every time
 
