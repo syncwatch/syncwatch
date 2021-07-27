@@ -12,7 +12,7 @@
     <tbody>
         {% for watch in watched %}
         <tr>
-            <td>{{watch.relpath2}}</td>
+            <td><a href="/movies/{{watch.relpath2}}">{{watch.relpath2}}</a></td>
             <td>{{watch.percentage  | round: 0}} %</td>
             <td><script>document.write(new Date(+"{{watch.time}}").toLocaleString());</script></td>
         </tr>
