@@ -1,0 +1,20 @@
+{% layout "template" %}
+{% block content %}
+{% include 'nav' %}
+<table class="table table-striped table-bordered" style="width:100%">
+    <thead>
+        <tr>
+            <th>Movie</th>
+            <th>Time</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for movie in movies %}
+        <tr>
+            <td><a href="/movies/{{movie.relpath}}">{{movie.relpath}}</a></td>
+            <td><script>document.write(new Date(+"{{movie.addedtime}}").toLocaleString());</script></td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% endblock %}

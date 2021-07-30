@@ -161,10 +161,18 @@ module.exports.createDatabase = async (settings) => {
     functions.getMoviesByAddedTime = (amount, cb) => {
         var exts = settings.MOVIE_FORMAT_EXTENSIONS;
         var extor = exts.map(() => 'extension = ?').join(' OR ');
-        db.all(`SELECT * FROM files WHERE ((` + extor + `) AND episode IS NULL) OR extension = ? ORDER BY addedtime DESC, relpath ASC LIMIT ?`,
+        if (amount > 0) {
+            db.all(`SELECT * FROM files WHERE ((` + extor + `) AND episode IS NULL) OR extension = ? ORDER BY addedtime DESC, relpath ASC LIMIT ?`,
             [...exts, settings.EPISODE_EXTENSION, amount], (err, rows) => {
                 cb(rows);
             });
+        } else {
+            db.all(`SELECT * FROM files WHERE ((` + extor + `) AND episode IS NULL) OR extension = ? ORDER BY addedtime DESC, relpath ASC`,
+            [...exts, settings.EPISODE_EXTENSION], (err, rows) => {
+                cb(rows);
+            });
+        }
+        
     }
 
     functions.updateFiles = (files) => {
