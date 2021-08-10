@@ -298,6 +298,18 @@
     }
 
     var settings_options = {
+        audio: {
+            type: 'select',
+            store: true,
+            selected: 0,
+            callback: setAudioTrack,
+            title: 'Audio Track',
+            values: [{
+                title: 'original',
+                original: true
+            }
+            ]
+        },
         size: {
             type: 'select',
             store: true,
@@ -387,18 +399,6 @@
             callback: setOffset,
             title: 'Subtitle Offset',
         },
-        audio: {
-            type: 'select',
-            store: true,
-            selected: 0,
-            callback: setAudioTrack,
-            title: 'Audio Track',
-            values: [{
-                title: 'original',
-                original: true
-            }
-            ]
-        },
         altoffset: {
             type: 'number',
             store: false,
@@ -406,7 +406,7 @@
             value: 0,
             suffix: 'ms',
             callback: () => { },
-            title: 'Alt Offset'
+            title: 'Audio Offset'
         },
         showsecond: {
             type: 'select',
