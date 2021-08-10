@@ -43,10 +43,11 @@ npm start
 
 You can now access syncwatch from your browser at [`http://localhost:3000/`](http://localhost:3000/)
 
-
-## Screenshots
+## File System Structure
 
 ![File System](/docs/file_system.png?raw=true "File System")
+
+## Screenshots
 
 ![Screenshot Files](/docs/screenshot_files.png?raw=true "Screenshot Files")
 
