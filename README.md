@@ -28,9 +28,13 @@ cd syncwatch
 npm install
 ```
 
-Don't forget to copy the example database file `server.db.example` to `server.db` after every breaking update.
+Copy the database file `server.db.example` to `server.db`
 
-And adjust the `FILES_PATH` variable inside `settings.js` to specify where files and videos should be stored.
+Copy the settings file `settings.js.example` to `settings.js`
+
+Adjust the `FILES_PATH` variable inside `settings.js` to specify where files and videos should be stored.
+
+Change the `SESSION_SECRET`
 
 ```bash
 # Start the syncwatch server
@@ -41,6 +45,8 @@ You can now access syncwatch from your browser at [`http://localhost:3000/`](htt
 
 
 ## Screenshots
+
+![File System](/docs/file_system.png?raw=true "File System")
 
 ![Screenshot Files](/docs/screenshot_files.png?raw=true "Screenshot Files")
 
