@@ -1,13 +1,14 @@
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top"><button class="navbar-toggler" type="button"
-        data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent"
-        aria-expanded="false" aria-label="Toggle navigation"><span class="navbar-toggler-icon"></span></button>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary sticky-top">
+    <a href="/" class="no-decoration">
+        <div class="mr-2">
+            {% include 'logo' %}
+        </div>
+    </a>
+    <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent"
+        aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+    </button>
     <div class="collapse navbar-collapse" id="navbarSupportedContent">
-        <a href="/" class="no-decoration">
-            <div class="mt-2 mt-lg-0 mr-0 mr-lg-2">
-                {% include 'logo' %}
-            </div>
-        </a>
-
         <ul class="navbar-nav mr-auto">
             {% for page in pages %}
             {% if page.navbar != false %}
@@ -30,8 +31,8 @@
             {% endif %}
             {% endfor %}
             <div class="nav-item dropdown">
-                <a id="styleDropdown" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true"
-                    aria-expanded="false">Style</a>
+                <a id="styleDropdown" class="nav-link dropdown-toggle" data-toggle="dropdown" href="#" role="button"
+                    aria-haspopup="true" aria-expanded="false">Style</a>
                 <div class="dropdown-menu dropdown-menu-right">
                     <script>
                         Object.keys(themes).forEach(theme => {
