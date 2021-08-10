@@ -1,22 +1,26 @@
 {% layout "template" %}
 {% block content %}
 {% include 'nav' %}
-<table class="table table-striped table-bordered" style="width:100%">
-    <thead>
-        <tr>
-            <th>Movie</th>
-            <th>Percentage</th>
-            <th>Time</th>
-        </tr>
-    </thead>
-    <tbody>
-        {% for watch in watched %}
-        <tr>
-            <td><a href="/movies/{{watch.relpath2}}">{{watch.relpath2}}</a></td>
-            <td>{{watch.percentage  | round: 0}} %</td>
-            <td><script>document.write(new Date(+"{{watch.time}}").toLocaleString());</script></td>
-        </tr>
-        {% endfor %}
-    </tbody>
-</table>
+<div class="table-responsive">
+    <table class="table table-striped table-bordered">
+        <thead>
+            <tr>
+                <th>Movie</th>
+                <th>Percentage</th>
+                <th>Time</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for watch in watched %}
+            <tr>
+                <td><a href="/movies/{{watch.relpath2}}">{{watch.relpath2}}</a></td>
+                <td>{{watch.percentage | round: 0}} %</td>
+                <td>
+                    <script>document.write(new Date(+"{{watch.time}}").toLocaleString());</script>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
 {% endblock %}
