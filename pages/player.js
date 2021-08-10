@@ -235,8 +235,8 @@ module.exports.setup = (server) => {
                 if (room.playing) {
                     socket.emit('go', room.time + ((Date.now() - room.time_written) / 1000));
                 } else {
-                    socket.emit('pause');
                     socket.emit('goto', room.time);
+                    socket.emit('pause');
                 }
             });
             socket.on('go', (data) => {

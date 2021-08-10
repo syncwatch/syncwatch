@@ -769,6 +769,7 @@
     });
 
     player.on('loadedmetadata', event => {
+        player.currentTime = 0.01;
         if (currentSource && currentSource.percentage) {
             $('#prevWatchedTime').text(secondsToTime(player.duration * 0.01 * currentSource.percentage));
         } else {
