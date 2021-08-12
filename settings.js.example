@@ -4,6 +4,9 @@ module.exports.SESSION_SECRET = 'aSavEsecRetForTHesessIon';
 // path to the files and movies
 module.exports.FILES_PATH = '/';
 
+// OMDB Api Key (get from http://www.omdbapi.com/)
+module.exports.OMDB_APIKEY = '';
+
 // path where ads can be found
 module.exports.ADS_FOLDER = 'adv-images';
 

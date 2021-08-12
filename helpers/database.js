@@ -39,6 +39,24 @@ module.exports.createDatabase = async (settings) => {
             PRIMARY KEY (username, relpath2)
             );
         `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS suggestions (
+            id TEXT NOT NULL PRIMARY KEY,
+            title TEXT NOT NULL,
+            url TEXT NOT NULL,
+            rating INTEGER NOT NULL,
+            poster TEXT NOT NULL,
+            time INTEGER NOT NULL
+            );
+        `);
+        db.run(`
+            CREATE TABLE IF NOT EXISTS suggestion_votes (
+            username TEXT NOT NULL,
+            sid TEXT NOT NULL,
+            time INTEGER NOT NULL,
+            PRIMARY KEY (username, sid)
+            );
+        `);
     });
 
     var functions = {};
@@ -103,6 +121,29 @@ module.exports.createDatabase = async (settings) => {
         });
     }
 
+    functions.addSuggestion = (id, title, url, rating, poster) => {
+        db.run(`INSERT OR REPLACE INTO suggestions(id, title, url, rating, poster, time) VALUES(?, ?, ?, ?, ?, ?);`,
+            [id, title, url, rating, poster, Date.now()]);
+    }
+
+    functions.getSuggestions = (username, cb) => {
+        db.all(
+            `SELECT COUNT(sv2.sid) AS voted, *, COUNT(sv1.sid) AS votes FROM suggestions
+            LEFT JOIN suggestion_votes AS sv1 ON suggestions.id = sv1.sid
+			LEFT JOIN suggestion_votes AS sv2 ON suggestions.id = sv2.sid AND sv2.username = ?
+            GROUP BY suggestions.id`,
+            [username],
+            (err, rows) => {
+                cb(rows);
+            }
+        );
+    }
+
+    functions.voteSuggestion = (username, sid) => {
+        db.run(`INSERT OR IGNORE INTO suggestion_votes(username, sid, time) VALUES(?, ?, ?);`,
+            [username, sid, Date.now()]);
+    }
+
     functions.getFiles = (parent, cb) => {
         db.all(`SELECT * FROM files WHERE parent = ? ORDER BY relpath ASC`, [parent], (err, rows) => {
             cb(rows);
@@ -163,16 +204,16 @@ module.exports.createDatabase = async (settings) => {
         var extor = exts.map(() => 'extension = ?').join(' OR ');
         if (amount > 0) {
             db.all(`SELECT * FROM files WHERE ((` + extor + `) AND episode IS NULL) OR extension = ? ORDER BY addedtime DESC, relpath ASC LIMIT ?`,
-            [...exts, settings.EPISODE_EXTENSION, amount], (err, rows) => {
-                cb(rows);
-            });
+                [...exts, settings.EPISODE_EXTENSION, amount], (err, rows) => {
+                    cb(rows);
+                });
         } else {
             db.all(`SELECT * FROM files WHERE ((` + extor + `) AND episode IS NULL) OR extension = ? ORDER BY addedtime DESC, relpath ASC`,
-            [...exts, settings.EPISODE_EXTENSION], (err, rows) => {
-                cb(rows);
-            });
+                [...exts, settings.EPISODE_EXTENSION], (err, rows) => {
+                    cb(rows);
+                });
         }
-        
+
     }
 
     functions.updateFiles = (files) => {
