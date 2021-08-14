@@ -103,6 +103,19 @@ module.exports.setup = (server) => {
                 });
             }
 
+            function getWatchingPercentage(roomId) {
+                var room = server.room_manager.getRoom(roomId);
+
+                var rtime = room.time;
+                if (room.playing) {
+                    rtime = room.time + ((Date.now() - room.time_written) / 1000);
+                }
+                if (rtime > 10 && room.duration && room.duration > 0) {
+                    return Math.min(100, rtime * 100 / room.duration);
+                }
+                return -1;
+            }
+
             function switchMovie(s, newMovie) {
                 server.db.getWatchedPercentage(s.request.session.username, newMovie.relpath, (row) => {
                     if (row) {
@@ -123,32 +136,24 @@ module.exports.setup = (server) => {
                     return;
                 }
 
-                var rtime = room.time;
-                if (room.playing) {
-                    rtime = room.time + ((Date.now() - room.time_written) / 1000);
-                }
-                var percentage = 0;
-                if (room.duration && room.duration > 0) {
-                    percentage = Math.min(100, rtime * 100 / room.duration);
+                var socketroom = server.io.of('/player').adapter.rooms.get(roomId);
 
-                    if (percentage > 0) {
-                        socketroom.forEach(cid => {
-                            var user = server.io.of('/player').sockets.get(cid);
-                            server.db.updateWatchedPercentage(user.request.session.username, room.watching_id, percentage);
-                        });
-                    }
+
+                var percentage = getWatchingPercentage(roomId);
+                if (percentage > 0) {
+                    socketroom.forEach(cid => {
+                        var user = server.io.of('/player').sockets.get(cid);
+                        server.db.updateWatchedPercentage(user.request.session.username, room.watching_id, percentage);
+                    });
                 }
 
                 server.room_manager.switchRoom(roomId, newDoc.relpath, socket.request.session.username);
                 server.room_manager.setWatchingName(roomId, newMovie.name);
 
-                var room = server.io.of('/player').adapter.rooms.get(roomId);
-                if (room) {
-                    room.forEach(cid => {
-                        var user = server.io.of('/player').sockets.get(cid);
-                        switchMovie(user, newMovie);
-                    });
-                }
+                socketroom.forEach(cid => {
+                    var user = server.io.of('/player').sockets.get(cid);
+                    switchMovie(user, newMovie);
+                });
             }
 
             socket.on('ready', (robj) => {
@@ -292,16 +297,10 @@ module.exports.setup = (server) => {
                     delete socket.request.session.room_id;
                     return;
                 }
-                var rtime = room.time;
-                if (room.playing) {
-                    rtime = room.time + ((Date.now() - room.time_written) / 1000);
-                }
-                var percentage = 0;
-                if (room.duration && room.duration > 0) {
-                    percentage = Math.min(100, rtime * 100 / room.duration);
-                    if (percentage > 0) {
-                        server.db.updateWatchedPercentage(socket.request.session.username, room.watching_id, percentage);
-                    }
+
+                var percentage = getWatchingPercentage(rid);
+                if (percentage > 0) {
+                    server.db.updateWatchedPercentage(socket.request.session.username, room.watching_id, percentage);
                 }
 
                 if (server.io.of('/player').adapter.rooms.get(rid) == undefined || server.io.of('/player').adapter.rooms.get(rid).length === 0) {
