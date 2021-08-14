@@ -14,7 +14,7 @@
         <div class="card">
             <img class="card-img-top" style="max-height: 200px; object-fit: scale-down;" src="{{movie.poster}}" alt="Movie Poster">
             <div class="card-body">
-                <h5 class="card-title">{{movie.title}}</h5>
+                <h5 class="card-title"><a href="{{movie.url}}" target="_blank">{{movie.title}}</a></h5>
                 <span class="h5">{{movie.votes}} Vote{% if movie.votes != 1 %}s{% endif %}&nbsp;</span>
                 <input type="hidden" name="id" value="{{movie.id}}">
                 <button class="btn btn-primary btn-lg" name="upvote" type="submit" {% if movie.voted == 1 %}disabled{% endif %}><i class="fas fa-arrow-up"></i></button>
