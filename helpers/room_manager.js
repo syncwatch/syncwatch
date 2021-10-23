@@ -6,6 +6,7 @@ module.exports.createRoomManager = () => {
     room_manager.createRoom = (room_id, movie_id, username) => {
         rooms_map.set(room_id, {
             watching_id: movie_id,
+            public: true,
             playing: false,
             time: 0,
             time_written: 0,
@@ -32,13 +33,11 @@ module.exports.createRoomManager = () => {
         var rooms = [];
         rooms_map.forEach((value, roomId) => {
             var room = io.of('/player').adapter.rooms.get(roomId);
-            if (room) {
+            if (room && value.public) {
                 var usernames = [];
                 room.forEach(cid => {
                     var user = io.of('/player').sockets.get(cid);
-                    if (user.request.session.online) {
-                        usernames.push(user.request.session.username);
-                    }
+                    usernames.push(user.request.session.username);
                 });
                 rooms.push({ id: roomId, status: value.watching_name, users: usernames });
             }
@@ -70,6 +69,12 @@ module.exports.createRoomManager = () => {
         }
         room.chat.push(msg);
         io.of('/player').to(room_id).emit('chatMsg', msg);
+    };
+
+    room_manager.setPublic = (room_id, public) => {
+        if (rooms_map.has(room_id)) {
+            rooms_map.get(room_id).public = public;
+        }
     };
 
     room_manager.setWatchingName = (room_id, name) => {

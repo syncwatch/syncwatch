@@ -13,9 +13,7 @@ module.exports.setup = (server) => {
                 if (room) {
                     room.forEach(cid => {
                         var user = server.io.of('/player').sockets.get(cid);
-                        if (user.request.session.online) {
-                            usernames.push(user.request.session.username);
-                        }
+                        usernames.push(user.request.session.username);
                     });
                     server.io.of('/player').to(roomId).emit('users', usernames);
                 }
@@ -131,7 +129,7 @@ module.exports.setup = (server) => {
                 var room = server.room_manager.getRoom(roomId);
 
                 var socketroom = server.io.of('/player').adapter.rooms.get(roomId);
-                
+
                 if (!room || !socketroom) {
                     return;
                 }
@@ -169,17 +167,19 @@ module.exports.setup = (server) => {
                             return;
                         }
                     }
-                    socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + rid]);
-
-                    var vid = server.room_manager.getRoom(rid).watching_id;
 
                 } else {
                     socket.disconnect(true);
                     return;
                 }
-                if (!vid) {
-                    return;
-                }
+
+                socket.emit('roomJoined', ['You joined a room!', 'You joined the room with the ID: ' + rid]);
+
+                var room = server.room_manager.getRoom(rid);
+
+                socket.emit('public', room.public);
+
+                var vid = room.watching_id;
 
                 prepareMovie(vid, (movie) => {
                     if (movie) {
@@ -281,13 +281,10 @@ module.exports.setup = (server) => {
                 server.io.of('/player').to(rid).emit('pause');
                 server.room_manager.setPlaying(rid, false);
             });
-            socket.on('online', () => {
-                socket.request.session.online = true;
-                emitUsersToRoom();
-            });
-            socket.on('offline', () => {
-                socket.request.session.online = false;
-                emitUsersToRoom();
+            socket.on('public', (public) => {
+                var rid = socket.request.session.room_id;
+                server.room_manager.setPublic(rid, public);
+                server.io.of('/player').to(rid).emit('public', public);
             });
             socket.on('disconnect', () => {
                 emitUsersToRoom();

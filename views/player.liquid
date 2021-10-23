@@ -35,13 +35,13 @@
                 <p class="mr-4 mb-2 p-2" id="fileName"></p>
                 <div class="mb-2">
                     <div class="btn-group btn-group-toggle" data-toggle="buttons">
-                        <label class="btn btn-primary">
-                            <input type="radio" name="options" id="toggleOnlineBtn" autocomplete="off"
-                                onclick="toggleWatchingOnline(true)">Online
+                        <label class="btn btn-primary" id="togglePublicBtn">
+                            <input type="radio" name="options" autocomplete="off"
+                                onclick="toggleWatchingPublic(true)">Public
                         </label>
-                        <label class="btn btn-primary">
-                            <input type="radio" name="options" id="toggleOfflineBtn" autocomplete="off"
-                                onclick="toggleWatchingOnline(false)">Offline
+                        <label class="btn btn-primary" id="togglePrivateBtn">
+                            <input type="radio" name="options" autocomplete="off"
+                                onclick="toggleWatchingPublic(false)">Private
                         </label>
                     </div>
                 </div>
@@ -111,24 +111,8 @@
         socket.emit(key, data);
     }
 
-    var watchingOnlineStorageKey = 'watchingOnline';
-    if (localStorage.getItem(watchingOnlineStorageKey) == 'false') {
-        document.getElementById('toggleOfflineBtn').checked = true;
-        document.getElementById('toggleOnlineBtn').checked = false;
-    } else {
-        document.getElementById('toggleOfflineBtn').checked = false;
-        document.getElementById('toggleOnlineBtn').checked = true;
-    }
-
-
-    function toggleWatchingOnline(online) {
-        localStorage.setItem(watchingOnlineStorageKey, online);
-
-        if (online == false) {
-            emit('offline');
-        } else {
-            emit('online');
-        }
+    function toggleWatchingPublic(public) {
+        emit('public', public);
     }
 
     function switchEpisode(value) {
@@ -194,8 +178,6 @@
 
         emit('ready', { room_id: "{{room_id}}", movie_id: movie_id });
 
-        toggleWatchingOnline(localStorage.getItem(watchingOnlineStorageKey) != 'false');
-
         $('#roomJoinedModal').on('hide.bs.modal', e => {
             emit('update');
         });
@@ -204,6 +186,19 @@
             document.getElementById('userList').innerHTML = users.map(user => {
                 return '<li class="list-group-item">' + user + '</li>';
             }).join('');
+        });
+
+        socket.on('public', (public) => {
+            var publicBtn = document.getElementById("togglePublicBtn");
+            var privateBtn = document.getElementById("togglePrivateBtn");
+            if (public) {
+                publicBtn.classList.add("active");
+                privateBtn.classList.remove("active");
+            } else {
+                privateBtn.classList.add("active");
+                publicBtn.classList.remove("active");
+            }
+
         });
 
         socket.on('fullscreen-leave', () => {
