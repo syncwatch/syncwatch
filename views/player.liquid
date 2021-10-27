@@ -668,6 +668,8 @@
             </button>
         `;
 
+    var pausetimeout;
+    var pausetimebuffer = 200;
 
     player = new Plyr('#player', {
         controls: controls,
@@ -678,15 +680,23 @@
         },
         listeners: {
             play: (e) => {
-                if (Date.now() < last_pause + 250) {
+                if (Date.now() < last_pause + pausetimebuffer) {
+                    clearTimeout(pausetimeout);
                     return false;
                 }
+
+                pausetimeout = setTimeout(function () {
+                    if (player.playing) {
+                        playerPaused(e);
+                        backplayer.pause();
+                    } else {
+                        playerPlayed(e);
+                        backplayer.play();
+                    }
+                }, pausetimebuffer);
+
                 last_pause = Date.now();
-                if (player.playing) {
-                    playerPaused(e);
-                    backplayer.pause();
-                }
-                return true;
+                return false;
             }
         }
     });
