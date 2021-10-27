@@ -163,6 +163,8 @@
 
     var backplayer;
 
+    var skipsend = false;
+
     var sheet = document.createElement('style');
 
     document.body.appendChild(sheet);
@@ -281,11 +283,19 @@
     });
 
     function playerSeeked(event) {
-        emit('goto', { time: player.currentTime, duration: player.duration });
+        if (!skipsend) {
+            emit('goto', { time: player.currentTime, duration: player.duration });
+        } else {
+            skipsend = false;
+        }
     }
 
     function playerPlayed(event) {
-        emit('go', { time: player.currentTime, duration: player.duration });
+        if (!skipsend) {
+            emit('go', { time: player.currentTime, duration: player.duration });
+        } else {
+            skipsend = false;
+        }
     }
 
     function playerPaused(event) {
@@ -764,6 +774,7 @@
     });
 
     player.on('loadedmetadata', event => {
+        skipsend = true;
         player.currentTime = 0.01;
         if (currentSource && currentSource.percentage) {
             $('#prevWatchedTime').text(secondsToTime(player.duration * 0.01 * currentSource.percentage));
