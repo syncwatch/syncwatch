@@ -1,7 +1,7 @@
 {
   "name": "syncwatch",
   "version": "1.0.0",
-  "description": "",
+  "description": "File sharing and synced video streaming server to watch movies with your best friends.",
   "main": "server.js",
   "dependencies": {
     "express": "^4.17.1",
@@ -9,7 +9,6 @@
     "express-status-monitor": "git+https://github.com/skillor/express-status-monitor.git",
     "formidable": "^1.2.2",
     "fuse.js": "^6.4.6",
-    "imdb-api": "^4.4.1",
     "liquidjs": "^9.25.1",
     "socket.io": "^4.1.2",
     "sqlite3": "^5.0.2",
@@ -22,5 +21,16 @@
     "start": "node server.js"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "directories": {
+    "doc": "docs"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/syncwatch/syncwatch.git"
+  },
+  "bugs": {
+    "url": "https://github.com/syncwatch/syncwatch/issues"
+  },
+  "homepage": "https://github.com/syncwatch/syncwatch#readme"
 }

@@ -39,24 +39,6 @@ module.exports.createDatabase = async (settings) => {
             PRIMARY KEY (username, relpath2)
             );
         `);
-        db.run(`
-            CREATE TABLE IF NOT EXISTS suggestions (
-            id TEXT NOT NULL PRIMARY KEY,
-            title TEXT NOT NULL,
-            url TEXT NOT NULL,
-            rating INTEGER NOT NULL,
-            poster TEXT NOT NULL,
-            time INTEGER NOT NULL
-            );
-        `);
-        db.run(`
-            CREATE TABLE IF NOT EXISTS suggestion_votes (
-            username TEXT NOT NULL,
-            sid TEXT NOT NULL,
-            time INTEGER NOT NULL,
-            PRIMARY KEY (username, sid)
-            );
-        `);
     });
 
     var functions = {};
@@ -119,29 +101,6 @@ module.exports.createDatabase = async (settings) => {
         db.all(`SELECT * FROM watched WHERE username = ? ORDER BY time DESC, relpath2 ASC`, [username], (err, rows) => {
             cb(rows);
         });
-    }
-
-    functions.addSuggestion = (id, title, url, rating, poster) => {
-        db.run(`INSERT OR REPLACE INTO suggestions(id, title, url, rating, poster, time) VALUES(?, ?, ?, ?, ?, ?);`,
-            [id, title, url, rating, poster, Date.now()]);
-    }
-
-    functions.getSuggestions = (username, cb) => {
-        db.all(
-            `SELECT COUNT(sv2.sid) AS voted, *, COUNT(sv1.sid) AS votes FROM suggestions
-            LEFT JOIN suggestion_votes AS sv1 ON suggestions.id = sv1.sid
-			LEFT JOIN suggestion_votes AS sv2 ON suggestions.id = sv2.sid AND sv2.username = ?
-            GROUP BY suggestions.id`,
-            [username],
-            (err, rows) => {
-                cb(rows);
-            }
-        );
-    }
-
-    functions.voteSuggestion = (username, sid) => {
-        db.run(`INSERT OR IGNORE INTO suggestion_votes(username, sid, time) VALUES(?, ?, ?);`,
-            [username, sid, Date.now()]);
     }
 
     functions.getFiles = (parent, cb) => {
