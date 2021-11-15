@@ -100,7 +100,11 @@ module.exports.createDatabase = async (settings) => {
     functions.changeUserPassword = (username, oldpassword, newpassword, cb) => {
         functions.getUser(username, oldpassword, (row) => {
             if (row) {
-                db.run(`UPDATE users SET password = ? WHERE username = ?;`, [newpassword, username], cb);
+
+                var salt = crypto.randomBytes(16).toString('hex');
+                var hash = crypto.pbkdf2Sync(newpassword, salt, 1000, 64, 'sha512').toString('hex');
+
+                db.run(`UPDATE users SET password = ? WHERE username = ?;`, [salt + ':' + hash, username], cb);
             } else {
                 cb(false);
             }
