@@ -32,7 +32,7 @@ module.exports.setup = (server) => {
                         return;
                     }
                     server.db.changeUserPassword(req.session.username, req.body.oldPassword, req.body.newPassword, (x, y) => {
-                        server.helpers.setInfo(req, "Password change successfully!", 'success');
+                        server.helpers.setInfo(req, "Password changed successfully!", 'success');
                         onFinish();
                     });
                 });

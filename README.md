@@ -36,6 +36,8 @@ Adjust the `FILES_PATH` variable inside `settings.js` to specify where files and
 
 Change the `SESSION_SECRET`
 
+The default login is user: `admin` and password: `admin`
+
 ```bash
 # Start the syncwatch server
 npm start

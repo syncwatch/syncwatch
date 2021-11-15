@@ -1,5 +1,6 @@
 module.exports.createDatabase = async (settings) => {
     var sqlite3 = require('sqlite3');
+    var crypto = require('crypto');
     var db = new sqlite3.Database('./server.db');
 
     db.serialize(() => {
@@ -54,27 +55,55 @@ module.exports.createDatabase = async (settings) => {
     }
 
     functions.getUser = (username, password, cb) => {
-        db.get(`SELECT username, permission, premium FROM users WHERE username = ? AND password = ?`, [username, password], (err, row) => {
-            cb(row);
+        db.get(`SELECT username, password, permission, premium FROM users WHERE username = ?`, [username], (err, row) => {
+            if (!row) {
+                cb(false);
+                return;
+            }
+
+            var [salt, hash] = row.password.split(":");
+
+            var newHash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+            if (newHash === hash) {
+                cb(row);
+                return;
+            }
+            cb(false);
         });
     }
 
     functions.getUsers = (permission, cb) => {
-        db.all(`SELECT username, password, permission, premium FROM users WHERE permission <= ?`, [permission], (err, rows) => {
+        db.all(`SELECT username, permission, premium FROM users WHERE permission < ?`, [permission], (err, rows) => {
             cb(rows);
         });
     }
 
     functions.createUser = (username, password, permission, premium, cb) => {
-        db.run(`INSERT INTO users(username, password, permission, premium) VALUES(?, ?, ?, ?);`, [username, password, permission, (premium ? true : false)], [], cb);
+        var salt = crypto.randomBytes(16).toString('hex');
+        var hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+
+        db.run(`INSERT INTO users(username, password, permission, premium) VALUES(?, ?, ?, ?);`, [username, salt + ':' + hash, permission, (premium ? true : false)], [], cb);
     }
 
     functions.deleteUser = (username, permission, cb) => {
-        db.run(`DELETE FROM users WHERE username = ? AND permission <= ?`, [username, permission], cb);
+        db.run(`DELETE FROM users WHERE username = ? AND permission < ?`, [username, permission], cb);
+    }
+
+    functions.setNewPassword = (username, password, permission, cb) => {
+        var salt = crypto.randomBytes(16).toString('hex');
+        var hash = crypto.pbkdf2Sync(password, salt, 1000, 64, 'sha512').toString('hex');
+
+        db.run(`UPDATE users SET password = ? WHERE username = ? AND permission < ?;`, [salt + ':' + hash, username, permission], cb);
     }
 
     functions.changeUserPassword = (username, oldpassword, newpassword, cb) => {
-        db.run(`UPDATE users SET password = ? WHERE username = ? AND password = ?;`, [newpassword, username, oldpassword], cb);
+        functions.getUser(username, oldpassword, (row) => {
+            if (row) {
+                db.run(`UPDATE users SET password = ? WHERE username = ?;`, [newpassword, username], cb);
+            } else {
+                cb(false);
+            }
+        });
     }
 
     functions.setUserPremium = (username, premium, cb) => {
