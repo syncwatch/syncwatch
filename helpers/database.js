@@ -1,7 +1,8 @@
 module.exports.createDatabase = async (settings) => {
     var sqlite3 = require('sqlite3');
     var crypto = require('crypto');
-    var db = new sqlite3.Database('./server.db');
+    var path = require('path');
+    var db = new sqlite3.Database(path.join(__dirname, '../server.db'));
 
     db.serialize(() => {
         db.run(`

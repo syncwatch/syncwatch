@@ -1,6 +1,7 @@
 module.exports.createMonitor = async (io) => {
 
-    var ifstat = new (require('../node-ifstat/ifstat')).Stats();
+    var path = require('path');
+    var ifstat = new (require(path.join(__dirname, '../node-ifstat/ifstat.js'))).Stats();
 
 
     while (ifstat.getDevices() === null) {

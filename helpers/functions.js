@@ -1,6 +1,6 @@
 var path = require('path');
 var fs = require('fs');
-var settings = require('../settings');
+var settings = require(path.join(__dirname, '../settings.js'));
 
 Function.prototype.clone = function () {
     return this.bind({ ...this });

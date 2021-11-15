@@ -1,10 +1,10 @@
 async function main() {
-    var settings = require('./settings.js');
-    var helpers = require('./helpers/functions.js');
-    var db = await require('./helpers/database.js').createDatabase(settings);
-
     var path = require('path');
     var fs = require('fs');
+
+    var settings = require(path.join(__dirname, './settings.js'));
+    var helpers = require(path.join(__dirname, './helpers/functions.js'));
+    var db = await require(path.join(__dirname, './helpers/database.js')).createDatabase(settings);
 
     var http = require('http');
     var express = require('express');
@@ -21,7 +21,7 @@ async function main() {
 
     var lastRefresh = 0;
 
-    var room_manager = require('./helpers/room_manager.js').createRoomManager();
+    var room_manager = require(path.join(__dirname, './helpers/room_manager.js')).createRoomManager();
 
     function log(msg, save = true) {
         helpers.log(msg, save, db);
@@ -90,7 +90,7 @@ async function main() {
         saveUninitialized: true
     });
 
-    var statusMonitor = await require('./helpers/monitor.js').createMonitor(io);
+    var statusMonitor = await require(path.join(__dirname, './helpers/monitor.js')).createMonitor(io);
 
     app.use(statusMonitor.middleware); // important to run first
     app.use(sessionMiddleware);
@@ -149,7 +149,7 @@ async function main() {
     };
 
     for (var i = 0; i < pages.length; i++) {
-        pages[i] = require('./pages/' + pages[i] + '.js').setup(serverObj);
+        pages[i] = require(path.join(__dirname, './pages/' + pages[i] + '.js')).setup(serverObj);
     }
 
     pages.forEach(page => {
