@@ -100,10 +100,10 @@ async function main() {
     var engine = new Liquid({
         root: path.resolve(__dirname, 'views/'),
         extname: '.liquid'
-    })
+    });
 
-    app.engine('liquid', engine.express()) // register liquid engine
-    app.set('view engine', 'liquid') // set to default
+    app.engine('liquid', engine.express()); // register liquid engine
+    app.set('view engine', 'liquid'); // set to default
 
     // express status monitor
     app.get('/status', (req, res) => {
