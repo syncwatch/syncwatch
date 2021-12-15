@@ -227,6 +227,7 @@
                 player.currentTime = timeStamp;
             }
             player.play();
+            backplayer.play();
         });
         socket.on('goto', timeStamp => {
             if (timeStamp > player.currentTime + timeOffset || timeStamp < player.currentTime - timeOffset) {
@@ -235,6 +236,7 @@
         });
         socket.on('pause', () => {
             player.pause();
+            backplayer.pause();
         });
         socket.on('switch', (source) => {
             currentSource = source;
@@ -711,7 +713,6 @@
 
     player.on('playing', (e) => {
         playerPlayed(e);
-        backplayer.play();
     });
 
     var offs = [];
