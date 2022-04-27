@@ -53,6 +53,19 @@ module.exports.CUSTOM_MOVIE_EXTENSIONS = [
 
 module.exports.MOVIE_EXTENSIONS = module.exports.MOVIE_FORMAT_EXTENSIONS.concat(module.exports.CUSTOM_MOVIE_EXTENSIONS);
 
+// enable traditional login via username and password
+module.exports.LEGACY_LOGIN_ENABLED = true;
+
+// settings for openid-connect login via external identity provider (no auto-provisioning)
+module.exports.OIDC_LOGIN_ENABLED = true;
+module.exports.OIDC_ISSUER_NAME = 'My Login Service';
+module.exports.OIDC_ISSUER_URL = 'https://account.example.org';
+module.exports.OIDC_CLIENT_ID = 'snenswatch';
+module.exports.OIDC_CLIENT_SECRET = 'this-is-a-client-secret';
+module.exports.OIDC_REDIRECT_URIS = ['http://localhost:3000/']; // default: syncwatch root url
+module.exports.OIDC_CLAIM_FOR_IDENTIFICATION = 'preferred_username';
+module.exports.OIDC_DB_USER_ID_COLUMN = 'username';
+
 // name and order for the permissions
 module.exports.PERMISSIONS = [
     'Watcher',
