@@ -54,7 +54,7 @@ module.exports.CUSTOM_MOVIE_EXTENSIONS = [
 module.exports.MOVIE_EXTENSIONS = module.exports.MOVIE_FORMAT_EXTENSIONS.concat(module.exports.CUSTOM_MOVIE_EXTENSIONS);
 
 // enable traditional login via username and password
-module.exports.LEGACY_LOGIN_ENABLED = true;
+module.exports.LEGACY_LOGIN_DISABLED = false;
 
 // settings for openid-connect login via external identity provider (no auto-provisioning)
 module.exports.OIDC_LOGIN_ENABLED = true;

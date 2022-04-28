@@ -39,7 +39,7 @@ module.exports.setup = (server) => {
                 res.redirect('/home');
                 res.end();
             } else {
-                res.render('login', server.helpers.getRenderInfo(server.pages, req, { 'oidc_enabled': settings.OIDC_LOGIN_ENABLED, 'oidc_name': settings.OIDC_ISSUER_NAME, 'legacy_enabled': settings.LEGACY_LOGIN_ENABLED }));
+                res.render('login', server.helpers.getRenderInfo(server.pages, req, { 'oidc_enabled': settings.OIDC_LOGIN_ENABLED, 'oidc_name': settings.OIDC_ISSUER_NAME, 'legacy_enabled': !settings.LEGACY_LOGIN_DISABLED }));
             }
         },
         pcb: (req, res) => {
@@ -78,7 +78,7 @@ module.exports.setup = (server) => {
                 });
                 return;
             }
-            if (settings.LEGACY_LOGIN_ENABLED == false) {
+            if (settings.LEGACY_LOGIN_DISABLED) {
                 server.helpers.setInfo(req, 'Legacy login disabled!');
                 server.log('IP: "' + server.helpers.getIp(req) + '" user: "' + username + '" tried to log in with a wrong password');
                 res.redirect('/');
