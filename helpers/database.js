@@ -73,6 +73,16 @@ module.exports.createDatabase = async (settings) => {
         });
     }
 
+    functions.getUserByColumn = (column_name, column_value, cb) => {
+        db.get(`SELECT username, password, permission, premium FROM users WHERE ${column_name} = ?`, [column_value], (err, row) => {
+            if (!row) {
+                cb(false);
+                return;
+            }
+            cb(row);
+        });
+    }
+
     functions.getUsers = (permission, cb) => {
         db.all(`SELECT username, permission, premium FROM users WHERE permission < ?`, [permission], (err, rows) => {
             cb(rows);

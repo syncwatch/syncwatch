@@ -1,5 +1,6 @@
 var path = require('path');
 var fs = require('fs');
+const oidc = require('openid-client')
 var settings = require(path.join(__dirname, '../settings.js'));
 
 Function.prototype.clone = function () {
@@ -188,4 +189,17 @@ module.exports.makeSaveFileName = (name) => {
 
 module.exports.passwordCompliance = (password) => {
     return password.length > 2;
+}
+
+module.exports.getOidcClient = (cb) => {
+    const oidc_issuer_promise = oidc.Issuer.discover(settings.OIDC_ISSUER_URL);
+    oidc_issuer_promise.then((oidc_issuer) => {
+        const client = new oidc_issuer.Client({
+            client_id: settings.OIDC_CLIENT_ID,
+            client_secret: settings.OIDC_CLIENT_SECRET,
+            redirect_uris: settings.OIDC_REDIRECT_URIS,
+            response_types: ['code'],
+        });
+        cb(client);
+    });
 }

@@ -56,15 +56,23 @@
     <div>
       {% include 'logo' %}
     </div>
+    {% if legacy_enabled == true %}
     <label for="inputUser" class="sr-only">Username</label>
     <input name="username" type="text" id="inputUser" class="form-control" placeholder="Username" required autofocus>
     <label for="inputPassword" class="sr-only">Password</label>
     <input name="password" type="password" id="inputPassword" class="form-control" placeholder="Password" required>
     <button class="btn btn-lg btn-primary btn-block" type="submit">Sign in</button>
+    {% endif %}
     {% if info_text %}
     <div class="alert alert-{{info_style}}" role="alert">
       {{info_text}}
     </div>
+    {% endif %}
+    {% if legacy_enabled == true and oidc_enabled == true %}
+    <span>or</span>
+    {% endif %}
+    {% if oidc_enabled == true %}
+    <a href="?oidc_login=start" class="btn btn-lg btn-primary btn-block" type="submit">Sign in with {{ oidc_name }}</a>
     {% endif %}
     <div class="dropdown">
       <a id="style-dropdown" class="dropdown-toggle" data-toggle="dropdown" href="#" role="button" aria-haspopup="true"
