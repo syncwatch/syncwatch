@@ -4,7 +4,7 @@
   "description": "File sharing and synced video streaming server to watch movies with your best friends.",
   "main": "server.js",
   "dependencies": {
-    "express": "^4.17.1",
+    "express": "^4.20.0",
     "express-session": "^1.17.2",
     "express-status-monitor": "git+https://github.com/skillor/express-status-monitor.git",
     "formidable": "^1.2.2",
