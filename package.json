@@ -10,11 +10,11 @@
     "formidable": "^1.2.2",
     "fuse.js": "^6.4.6",
     "liquidjs": "^9.25.1",
-    "openid-client": "^5.1.5",
+    "openid-client": "^6.6.1",
     "socket.io": "^4.1.2",
     "sqlite3": "^5.0.3",
     "uid-safe": "^2.1.5",
-    "youtube-dl-exec": "^1.2.4"
+    "youtube-dl-exec": "^3.0.22"
   },
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
