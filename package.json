@@ -9,7 +9,7 @@
     "express-status-monitor": "git+https://github.com/skillor/express-status-monitor.git",
     "formidable": "^1.2.2",
     "fuse.js": "^6.4.6",
-    "liquidjs": "^9.25.1",
+    "liquidjs": "^10.25.0",
     "openid-client": "^6.6.1",
     "socket.io": "^4.1.2",
     "sqlite3": "^5.0.3",
